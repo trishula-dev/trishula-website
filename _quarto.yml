@@ -34,7 +34,7 @@ website:
       - href: index.qmd#paper
         text: Paper
       - icon: github
-        href: https://github.com/trishula-dev/trishula
+        href: https://github.com/trishula-dev
 
 format:
   html:
