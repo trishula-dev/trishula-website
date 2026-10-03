@@ -79,9 +79,9 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 
 | Window | Items |
 |---|---|
-| Sprint (Fri PM → Mon) | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit |
-| Next window | TR-15–26: HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane |
-| Backlog | TR-27–36: academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
+| **v0.1** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit |
+| **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane |
+| **v0.3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
 
 Phase 0 exit criteria (checked honestly in TR-14): shield attaches on a kind node with kernel-side ban drop working · ladder end-to-end verdict logging · CRS PL1 parity reported in shadow · CRD round-trip ≤ 5 s · NGF steers to the engine in kind · span+metric+log correlate per request.
 
