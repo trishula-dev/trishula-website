@@ -5,17 +5,29 @@ subtitle: "An eBPF-native, developer-first Web Application and API Firewall for 
 
 [![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/orgs/trishula-dev/projects/1) [![site-check](https://github.com/trishula-dev/trishula-website/actions/workflows/site-check.yml/badge.svg)](https://github.com/trishula-dev/trishula-website/actions/workflows/site-check.yml)
 
-
-[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE)
-[![Project board](https://img.shields.io/badge/board-TR%E2%80%9101%E2%80%91036-blue)](https://github.com/orgs/trishula-dev/projects/1)
-
 ::: {.callout-note appearance="simple"}
 **Status: research / pre-alpha.** Design is specified in the PRD (v4) and the research paper; implementation starts from zero, tracked as [TR-01 … TR-36](https://github.com/orgs/trishula-dev/projects/1). Nothing here should be presumed working yet. This is research for adoption — not a product pitch.
 :::
 
-## Intro
+## Why this project
 
-Trishula is an open Web Application and API Firewall for Kubernetes that operates at **kernel altitude** while preserving the full userspace detection stack. One sentence: *the WAF is the last security control that never crossed to developer ubiquity — Trishula brings it across.* Three components, two planes, one decision record per request.
+A web application firewall inspects HTTP traffic and decides: allow, block, rate-suppress or tag. It is also the last major security control that never crossed to developer ubiquity. Three developments make the crossing feasible now, and each alone is only an optimisation; together they are an opening:
+
+- **Gateway API consolidation.** Kubernetes ingress is standardising on the Gateway API. The edge is being re-plumbed, and the WAF's integration point is contested — whatever attaches cleanly to the new standard will define the next decade of edge policy.
+- **eBPF maturity.** Kernel-altitude packet processing is dependable, inspectable and CO-RE portable. Enforcement no longer needs a middleware hop: the cheapest decisions can be made where the packet arrives.
+- **Machine-generated traffic at the WAF's front door.** Agents, scrapers and automated abuse arrive faster than hand-written signatures can follow, and they mint fingerprints machines cannot hide behind.
+
+Negative signatures alone cannot carry this load: too much good traffic to risk, too slow to maintain by hand. The project's premise is therefore positive security, fingerprinting and behaviour analysis, with signatures as one (important) stage among several.
+
+## How Trishula works
+
+Trishula pairs a kernel-altitude eBPF shield with a full userspace detection ladder. Three components, two planes, one decision record per request:
+
+- **Shield** (DaemonSet, XDP/TC): ACL, verdict cache and ban table enforced where the packet arrives; fail-open by default.
+- **Engine** (Deployment): the detection ladder S0–S6 — CEL rules under cost budgets, OWASP CRS via embedded Coraza, OpenAPI positive security, rate limits, JA4/behavioural bot detection.
+- **Operator** (Deployment): reconciles `WAFPolicy`/`BanPolicy` CRs into compiled engine bundles and pre-seeds shield maps; rollback is a CRD-recorded re-pin.
+
+Each verdict is a correlated OpenTelemetry record (`trishula.verdict.v1`); dashboards ship in-repo.
 
 ```{mermaid}
 flowchart LR
@@ -34,59 +46,12 @@ flowchart LR
 
 ## Objectives
 
-1. **Adoptability as a first-class feature** — CRD-driven policy, per-route promotion gates (learn → shadow → enforce), verdict telemetry a developer can actually read. The people who own the app own its protection.
-2. **Full detection stack at kernel altitude** — negative signatures, positive security, bot mechanisms and behaviour bans, backed by an eBPF enforcement point no middleware chain can offer.
-3. **Parity before novelty** — OWASP CRS runs via embedded Coraza as the reference evaluator; a CI-blocking differential suite proves the engine matches it, always.
-4. **Honest engineering** — fail-open defaults, evidence records for every ban, exit criteria that report pass/fail as measured.
+1. **Adoptability as a first-class feature** — CRD-driven policy, per-route promotion gates (learn → shadow → enforce), verdict telemetry a developer can directly interpret. The people who own the application own its protection.
+2. **Full detection stack at kernel altitude** — negative signatures, positive security, bot detection and behaviour bans, backed by an eBPF enforcement point a middleware chain cannot offer.
+3. **Parity before novelty** — OWASP CRS runs via embedded Coraza as the reference evaluator; a CI-blocking differential suite verifies the engine matches it.
+4. **Honest engineering** — fail-open defaults, evidence records for every ban, exit criteria reporting pass/fail as measured.
 
-## Teaching, education and adoption
-
-Security technology only spreads when it gets simpler to adopt, not more powerful. The history is consistent:
-
-| Precedent | What was hard | What made adoption cross over |
-|---|---|---|
-| Let's Encrypt | PKI was an expert discipline; certs cost money and ops time | One command (`certbot`), automation, free certs — TLS went from 40% to 90%+ of the web |
-| fail2ban | log-analysis and blocking were manual sec-ops work | A single daemon watched logs and banned offenders automatically — behaviour blocking became normal |
-| Caddy / nginx + cert-manager | TLS termination per-service was hand-configured | Convention-first configs made correct TLS the default path |
-| OWASP CRS | WAF rules were vendor black boxes | An open, community-maintained rule set made signature quality inspectable and shared |
-| Kubernetes Gateway API | every edge had its own config dialect | Standard CRDs made edge policy portable and reviewable like code |
-
-Trishula aims at the same crossing for the WAF. The teaching plan is the mechanism, not an afterthought:
-
-- **Academy modules with runnable labs** (PRD §7; [TR-27](https://github.com/trishula-dev/trishula/issues/27), [TR-28](https://github.com/trishula-dev/trishula/issues/28)) — HTTP on the wire, TLS, headers, fingerprints, positive security; each module is a hands-on lab against a live cluster, not slides.
-- **The 15-minute gate** ([TR-23](https://github.com/trishula-dev/trishula/issues/23), metric M3) — clone → first enforced rule in ≤ 15 minutes, timed nightly in CI. If it regresses, the release does not ship.
-- **Copy-paste-first policy recipes** — every lab ships the exact YAML a developer would commit; no dashboards required to understand a rule.
-- **Promotion gates as pedagogy** — learn → shadow → enforce isn't just a safety mechanism, it's the adoption journey: observe first, intervene second. Each stage has a lab.
-- **Verdict telemetry a developer can read** — one correlated OTel record per request; dashboards ship in-repo; the record schema (`trishula.verdict.v1`) is documented like an API, because it is one.
-- **Honest exit criteria** — every release states what works and what does not (the README checklist pattern adopted from the PRD's honesty mechanisms §18). Nothing to reverse-engineer.
-
-The audience is the application developer and the platform engineer who already runs Kubernetes — not the WAF specialist. Everything in the docs, labs and error messages is written to be understood at that level first.
-
-## Why this project
-
-Three curves converge, and each alone is an optimization. Together they are an opening:
-
-- **Gateway API consolidation** — Kubernetes ingress is standardising on the Gateway API; the edge is being re-plumbed right now, and the WAF's integration point is up for grabs.
-- **eBPF maturity** — kernel-altitude packet processing is dependable, inspectable and CO-RE portable; enforcement does not need to live in a middleware hop.
-- **AI traffic at the WAF's front door** — agents, scrapers and automated abuse hit exactly the layer the WAF inspects; they mint fingerprints machines cannot hide behind, and they arrive faster than hand-written signatures can follow.
-
-Negative signatures alone cannot carry a modern estate: too much good traffic to risk, too slow to maintain by hand. That is the reason for the project — and why the emphasis is positive security, fingerprinting and behaviour analysis with signatures as one (important) stage among several.
-
-## The WAF problem
-
-A web application firewall inspects HTTP conversations and decides: allow, block, rate-suppress or tag. The classic estate runs it in three shapes — an appliance at the edge, a module inside the reverse proxy (ModSecurity-lineage), or a sidecar/car next to the app. Each shape keeps the decision point *outside* the packet path's cheapest altitude, and each inherits the middleware's latency, scaling and failure behaviour.
-
-What a WAF must decide today:
-
-- **known-bad requests** — signature sets (OWASP CRS) remain the base layer;
-- **policy violations** — the request uses the API in ways its OpenAPI spec forbids (positive security);
-- **automation posing as users** — TLS/HTTP fingerprints (JA4), header order, value entropy, behavioural cadence;
-- **abuse patterns** — rate anomalies and repeat-offender behaviour needing temporary bans;
-- **new attack classes** — LLM/agent traffic shapes that no signature has seen yet.
-
-Traditional deployments answer these with a negative-signature engine and hope. The cost is well known: false positives that block good users, rules maintained by specialists, and telemetry a developer cannot read. Trishula's answer is structural: keep CRS as one stage, add the positive/fingerprint/behavioural stages, and move the cheapest decisions to the kernel — with every verdict emitted as OpenTelemetry.
-
-## Kubernetes deployment
+## Deployment model
 
 ```{mermaid}
 flowchart TB
@@ -112,11 +77,45 @@ flowchart TB
 - **Install order:** operator → shield (DaemonSet) → engine. The operator reconciles `WAFPolicy` / `BanPolicy` CRs into compiled engine bundles (double-buffered) and pre-seeds shield maps.
 - **Gateway API integration:** the gateway steers to the engine as a plain backend (HTTPRoute); [NGF](https://github.com/nginx/nginx-gateway-fabric) is the reference data plane — the whole reference stack is OSS. Conformant alternatives (Envoy Gateway, Istio, Traefik, Emissary, kgateway) attach the same way; an `ext_proc` wire-contract variant for Envoy-family estates is feature-gated for later.
 - **Fail-open by default:** an inline shaper must never become the outage; `failureMode` is explicit and audited per policy.
-- **Rollback:** a CRD-recorded re-pin of the previous bundle — never a hand-hack.
+- **Rollback:** a CRD-recorded re-pin of the previous bundle — never a manual intervention.
 - **Node requirements:** kernel ≥ 5.8; the shield is CO-RE and verifier-checked in CI.
 - **Telemetry:** every verdict is an OTLP span + metric + log on `trishula.verdict.v1`; dashboards ship in-repo.
 
-**Detection ladder** (short-circuit ordered): S0 kernel pre-clear (ACL, verdict cache, ban table) → S1 cache re-check → S2 CEL rules (cost-budgeted) → S3 OWASP CRS via embedded Coraza → S4 OpenAPI positive security → S5 rate limits → S6 bot fingerprints and behavioural windows. ScoredWindowBan turns repeated abuse into kernel-enforced temporary bans, evidence-recorded, prefix escalation off by default.
+**Detection ladder** (short-circuit ordered): S0 kernel pre-clear (ACL, verdict cache, ban table) → S1 cache re-check → S2 CEL rules (cost-budgeted) → S3 OWASP CRS via embedded Coraza → S4 OpenAPI positive security → S5 rate limits → S6 bot fingerprints and behavioural windows. ScoredWindowBan converts repeated abuse into kernel-enforced temporary bans, evidence-recorded, prefix escalation off by default.
+
+## Design rationale
+
+- **eBPF (XDP first, TC alongside)** — the only mechanism providing kernel-altitude, programmable, verifiable packet policy on stock Kubernetes nodes; CO-RE keeps builds portable. Enforcement happens where the packet arrives; a middleware chain cannot offer that position.
+- **Gateway API + NGF as reference** — Gateway API is where Kubernetes ingress is consolidating; NGF keeps the whole reference deployment OSS and mirrors the topology operators already run. Envoy-family estates get the feature-gated `ext_proc` variant later; single-data-plane lock-in is a non-goal.
+- **Embedded Coraza, not a rule-engine rewrite** — CRS compatibility is the adoption surface; embedding yields exact parity by construction, and the differential suite keeps a from-scratch fast path honest when it arrives (Vectorscan hot subset, behind a shadow gate).
+- **CEL as the first-class DSL** — typed, cost-budgeted evaluation, Kubernetes-native ergonomics, and a compile step the CRD pipeline can gate on cost before load. A general regex DSL cannot bound evaluation cost.
+- **OpenAPI positive security with promotion gates** — specs already exist in application repositories; learn → shadow → enforce makes adoption incremental instead of a big-bang policy cutover.
+- **ScoredWindowBan over naive counters** — fail2ban-style bans with an algorithmic scoring window, evidence per ban, prefix escalation off by default. Shared-egress false positives are the practical ban killer.
+- **OpenTelemetry as the verdict contract** — every verdict is a correlated span + metric + log. Security that cannot show its work cannot be adopted by developers.
+- **Fail-open by default** — an inline kernel shaper must never become the outage; `failureMode` is explicit and audited per policy.
+
+## Education and adoption
+
+Security technology spreads when adoption gets simpler, not when tooling grows more powerful. The precedents are consistent:
+
+| Precedent | What was hard | What made adoption cross over |
+|---|---|---|
+| Let's Encrypt | PKI was an expert discipline; certs cost money and ops time | One command (`certbot`), automation, free certs — TLS went from 40% to 90%+ of the web |
+| fail2ban | log analysis and blocking were manual sec-ops work | A single daemon watched logs and banned offenders automatically — behaviour blocking became normal |
+| Caddy / nginx + cert-manager | TLS termination per-service was hand-configured | Convention-first configs made correct TLS the default path |
+| OWASP CRS | WAF rules were vendor black boxes | An open, community-maintained rule set made signature quality inspectable and shared |
+| Kubernetes Gateway API | every edge had its own config dialect | Standard CRDs made edge policy portable and reviewable like code |
+
+Trishula targets the same crossing for the WAF. The education programme is the adoption mechanism, not an afterthought:
+
+- **Academy modules with runnable labs** (PRD §7; [TR-27](https://github.com/trishula-dev/trishula/issues/27), [TR-28](https://github.com/trishula-dev/trishula/issues/28)) — HTTP on the wire, TLS, headers, fingerprints, positive security; each module is a hands-on lab against a live cluster.
+- **The 15-minute gate** ([TR-23](https://github.com/trishula-dev/trishula/issues/23), metric M3) — clone → first enforced rule in ≤ 15 minutes, timed nightly in CI. If it regresses, the release does not ship.
+- **Copy-paste-first policy recipes** — every lab ships the exact YAML a developer would commit; no dashboards required to understand a rule.
+- **Promotion gates as the adoption path** — learn → shadow → enforce is both a safety mechanism and the adoption journey: observe first, intervene second. Each stage has a lab.
+- **Verdict telemetry a developer can read** — one correlated OTel record per request; the record schema (`trishula.verdict.v1`) is documented like an API, because it is one.
+- **Honest exit criteria** — every release states what works and what does not (the README checklist pattern from the PRD's honesty mechanisms §18).
+
+The audience is the application developer and platform engineer who already runs Kubernetes — not the WAF specialist. Documentation, labs and error messages are written to be understood at that level first.
 
 ## Roadmap
 
@@ -128,18 +127,7 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 | **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane |
 | **v0.3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
 
-Contributions welcome: pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (MIT).
-
-## Reasoning: why these specific choices
-
-- **eBPF (XDP first, TC alongside)** — the only mechanism that gives kernel-altitude, programmable, verifiable packet policy on stock Kubernetes nodes; CO-RE keeps builds portable. The drop happens where the packet arrives; a middleware chain cannot offer that.
-- **Gateway API + NGF as reference** — Gateway API is where Kubernetes ingress is consolidating; NGF keeps the whole reference deployment OSS and mirrors the topology operators already run. Envoy-family estates get the feature-gated `ext_proc` variant later; lock-in to one data plane is not a goal.
-- **Embedded Coraza, not a rule-engine rewrite** — CRS compatibility is the adoption surface; embedding buys exact parity by construction (the same parser semantics), and the differential suite keeps a from-scratch fast path honest when it arrives (Vectorscan hot subset, behind a shadow gate).
-- **CEL for the first-class DSL** — typed, cost-budgeted evaluation, Kubernetes-native ergonomics, and a compile step the CRD pipeline can gate on cost before load; a general regex DSL alone cannot offer bounded evaluation cost.
-- **OpenAPI positive security with promotion gates** — the developer-first path: specs exist in repos already; learn → shadow → enforce makes adoption incremental instead of a big-bang policy cutover.
-- **ScoredWindowBan over naive counters** — fail2ban-style bans with an algorithmic scoring window, evidence per ban, prefix escalation off by default: shared-egress false positives are the practical ban killer.
-- **OpenTelemetry as the verdict contract** — every verdict a correlated span+metric+log; security that cannot show its work cannot be adopted by developers.
-- **fail-open by default** — an inline kernel shaper must never become the outage; `failureMode` is explicit and audited per policy.
+Contributions follow the [contributing guide](contributing.html): pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (MIT).
 
 ## Paper
 
@@ -147,4 +135,8 @@ Contributions welcome: pick an issue labeled `complexity:starter` or any `area:*
 **[Download the research paper (PDF)](/assets/trishula-paper.pdf){.download}** — 18 pp (abstract, keywords, contents, numbered references). A link to the arXiv entry lands here when the paper is archived.
 :::
 
-The research paper (*“Trishula: An eBPF-Native, Developer-First Web Application and API Firewall for Kubernetes”*) is the research companion to this site: the adoptability thesis, the honest field survey (Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban, the eBPF cousins) with the feature-coverage matrix, and the adoption plan. A public link lands here when the paper is archived; until then it travels with the project docs.
+The research paper (*“Trishula: An eBPF-Native, Developer-First Web Application and API Firewall for Kubernetes”*) is the research companion to this site: the adoptability thesis, the field survey (Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban, the eBPF cousins) with the feature-coverage matrix, and the adoption plan. A public link lands here when the paper is archived; until then it travels with the project docs.
+
+## Project documents
+
+The [security policy](security.html) covers reporting a vulnerability, supported versions and disclosure expectations. The [contributing guide](contributing.html) covers branching, commit conventions, signing and CI gates. The [code of conduct](code-of-conduct.html) governs participation in all project spaces.

@@ -3,6 +3,10 @@ project:
   output-dir: _site
   render:
     - "index.qmd"
+    - "roadmap.qmd"
+    - "contributing.qmd"
+    - "security.qmd"
+    - "code-of-conduct.qmd"
 
 website:
   title: "Trishula"
@@ -18,21 +22,27 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - href: index.qmd#components--architecture
+      - href: index.qmd#how-trishula-works
         text: Architecture
-      - href: index.qmd#the-waf-problem
-        text: The WAF problem
-      - href: index.qmd#kubernetes-deployment
+      - href: index.qmd#why-this-project
+        text: Why
+      - href: index.qmd#deployment-model
         text: Kubernetes
-      - href: index.qmd#teaching-education-and-adoption
+      - href: index.qmd#education-and-adoption
         text: Education
-      - href: index.qmd#roadmap
+      - href: roadmap.qmd
         text: Roadmap
-      - href: index.qmd#reasoning-why-these-specific-choices
+      - href: index.qmd#design-rationale
         text: Reasoning
     right:
+      - href: roadmap.qmd
+        text: Roadmap
       - href: index.qmd#paper
         text: Paper
+      - href: contributing.qmd
+        text: Contributing
+      - href: security.qmd
+        text: Security
       - icon: github
         href: https://github.com/trishula-dev
 

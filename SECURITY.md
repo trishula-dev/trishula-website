@@ -4,7 +4,7 @@
 
 Report security bugs and vulnerabilities to
 **[shain.singh@owasp.org](mailto:shain.singh@owasp.org)** — or use GitHub's private
-vulnerability reporting: [Report a vulnerability](https://github.com/trishula-dev/trishula-website/security/advisories/new).
+vulnerability reporting: [Report a vulnerability](https://github.com/trishula-dev/trishula/security/advisories/new).
 Do not open a public issue for an unreported vulnerability.
 
 Email reports may be encrypted to the OpenPGP key below. Include a description of
@@ -176,60 +176,63 @@ kis=
 ```
 </details>
 
+## Supported scope
+
+The project is pre-alpha: nothing deployed from the board should yet be treated
+as production security. Reports against the design documents, the eBPF shield,
+the detection ladder and the operator are all in scope — a design-level flaw
+found before implementation is the cheapest flaw to fix.
+
+## Fail-open disclosure
+
+Trishula is fail-open by default: an unavailable engine degrades to pass-through
+rather than an outage. Bypass-by-failure is by design and documented per policy;
+reports arguing otherwise will be triaged as design discussions, not
+vulnerabilities.
+
 ## Special considerations for this project
 
-Trishula website is a **TLS-inspection appliance**: it sits in the path of TLS traffic and
-holds decryption material by design. Vulnerabilities in it are high-value by
-nature. Keep that in mind when testing.
+Trishula is an **inline enforcement point**: it sits in the request path and
+holds kernel-level drop authority by design. Vulnerabilities in it are
+high-value by nature. Keep that in mind when testing.
 
-- **This is a lab/testing appliance.** Deploy it only against networks and
-  clients you own or are authorised to test. Never point the edge at
-  third-party traffic.
-- **Interception material is sensitive.** The mitmproxy CA private key, the
-  OpenVPN CA and its PKI, and the JSONL decision log (which records hosts and
-  categories of browsed traffic) must all be treated as secret material.
-  Nothing is committed: PKI material lives in `./state/` (gitignored) or in
-  volumes. Do not commit or paste real key material in issues or PRs.
-- **Policy bypass is a vulnerability class here.** A bug that silently skips the
-  splice/bump verdict chain, blocks clamd from returning a verdict (fail-open),
-  or drops decision-log lines is a security bug, not a cosmetic one.
+- **Test only what you own.** Deploy against clusters and traffic you own or
+  are authorised to test.
+- **eBPF material is sensitive.** Kernel-side programs, map contents and the
+  verdict records (which describe request flows) must be treated as
+  security-relevant material. Nothing is committed; do not paste real map
+  dumps or verdict records into issues or PRs.
+- **Policy bypass is a vulnerability class here.** A bug that silently skips
+  the ladder verdict chain, forces fail-open beyond the declared
+  `failureMode`, or drops verdict-record lines is a security bug, not a
+  cosmetic one.
 
 ## How this repository maintains security hygiene
 
 **Supply-chain and dependency integrity**
 
-- Everything is built by Nix from a lockfile (`flake.lock`) — no floating image
-  bases, no Dockerfile builds; CI publishes the same digests it built
-  ([.github/workflows/release-images.yml](.github/workflows/release-images.yml)).
-- Per-image SPDX SBOMs are generated on every release and attached as release
-  assets.
 - Dependency Review — every PR is checked for license and vulnerability
-  differences versus its base (add
-  [.github/workflows/dependency-review.yml](.github/workflows/dependency-review.yml)
-  via the ai-sec-lab workflow).
+  differences versus its base
+  ([.github/workflows/dependency-review.yml](.github/workflows/dependency-review.yml)).
+- OpenSSF Scorecard — run on every change; results publish as a badge and SARIF
+  code-scanning upload
+  ([.github/workflows/scorecards.yml](.github/workflows/scorecards.yml)).
 - Dependabot — dependency manifests kept current; enable alerts in repo settings.
 
 **Secret hygiene**
 
-- Secret scanning and push protection — enable in repo settings (Settings →
-  Code security & analysis); blocked pushes containing credentials.
-- pre-commit runs `detect-private-key` on every change outside the legacy PKI
-  dirs ([.pre-commit-config.yaml](.pre-commit-config.yaml)).
+- Secret scanning and push protection — enabled in repo settings; blocked
+  pushes containing credentials.
+- Local pre-commit runs private-key detection on every change.
 
 **Reproducibility controls**
 
-- pre-commit.ci runs the hook set on every PR — formatting, YAML/JSON validity,
-  large-file guards, secret detection.
-- The appliance is a pinned NixOS flake (`flake.lock`); the container images are
-  byte-identical derivations from the same nixpkgs.
+- All commits are GPG/SSH-signed; unsigned commits are not merged.
 
 **Known boundaries, stated plainly**
 
-- The committed keys under the legacy directories are lab fixtures, generated
-  for this project's own test VPN — the README marks the whole appliance
-  *do not run unmodified in production*.
-- Transparent TCP interception in container mode is out of scope by design
-  (Docker bridges break TPROXY); use the NixOS appliance for that mode.
+- The project is pre-alpha; CI gates prove build health and parity claims, not
+  production readiness. The README checklist marks what actually works.
 
-Open a [general issue](https://github.com/trishula-dev/trishula-website/issues/new) for
+Open a [general issue](https://github.com/trishula-dev/trishula/issues/new) for
 non-sensitive questions; security reports follow the channels above.
