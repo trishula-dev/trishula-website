@@ -3,6 +3,9 @@ title: "Trishula"
 subtitle: "An eBPF-native, developer-first Web Application and API Firewall for Kubernetes"
 ---
 
+[![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/trishula-dev/trishula/badge)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/orgs/trishula-dev/projects/1)
+
+
 [![License](https://img.shields.io/badge/license-Apache--2.0-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE)
 [![Project board](https://img.shields.io/badge/board-TR%E2%80%9101%E2%80%91036-blue)](https://github.com/orgs/trishula-dev/projects/1)
 
