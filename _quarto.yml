@@ -37,6 +37,6 @@ website:
 format:
   html:
     theme: cosmo
-    css: assets/styles.css
+    css: assets/styles-v2.css
     toc: true
     code-copy: true
