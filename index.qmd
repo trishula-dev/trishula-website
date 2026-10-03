@@ -3,7 +3,7 @@ title: "Trishula"
 subtitle: "An eBPF-native, developer-first Web Application and API Firewall for Kubernetes"
 ---
 
-[![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/trishula-dev/trishula/badge)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/orgs/trishula-dev/projects/1) [![site-check](https://github.com/trishula-dev/trishula-website/actions/workflows/site-check.yml/badge.svg)](https://github.com/trishula-dev/trishula-website/actions/workflows/site-check.yml)
+[![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/orgs/trishula-dev/projects/1) [![site-check](https://github.com/trishula-dev/trishula-website/actions/workflows/site-check.yml/badge.svg)](https://github.com/trishula-dev/trishula-website/actions/workflows/site-check.yml)
 
 
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE)
