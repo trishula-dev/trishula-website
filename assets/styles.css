@@ -1,24 +1,35 @@
 /* Trishula docs — overrides on the cosmo theme */
 .navbar .navbar-brand { font-weight: 700; letter-spacing: 0.3px; }
 
-/* callouts: purple left rule, dashed feel, NO fill */
-.callout {
-  background: transparent;
-  border: none;
-  border-left: 3px dashed #712cf9;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0.6rem 1rem 0.6rem 1.1rem;
+/* Callouts: NO fill, purple dashed left rule (user spec) — high specificity to beat theme tints */
+div.callout,
+div.callout.callout-style-simple,
+div.callout.callout-style-default,
+div.callout.callout-titled {
+  background: transparent !important;
+  border: none !important;
+  border-left: 3px dashed #712cf9 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0.55rem 1rem 0.55rem 1.05rem !important;
 }
-.callout > .callout-body { background: transparent; }
-.callout-callout, .callout-note, .callout.callout-style-simple {
-  background: transparent;
+div.callout .callout-header,
+div.callout .callout-body,
+div.callout .callout-titled-band,
+div.callout .callout-body-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
-.callout .callout-title { color: #712cf9; font-weight: 600; }
-.callout-note .callout-icon { color: #712cf9; }
-/* strip any residual tinted backgrounds on default callout variants */
-.callout-style-default { background: transparent; border-left: 3px dashed #712cf9; }
-.callout-style-default > .callout-header { background: transparent; }
+div.callout .callout-title { color: #712cf9 !important; font-weight: 600; }
+div.callout .callout-icon,
+div.callout .callout-icon-container {
+  color: #712cf9 !important;
+  background: transparent !important;
+  border: none !important;
+}
+/* hide the double left border some themes paint on the body container */
+div.callout .callout-body-container { border-left: none !important; }
 
 /* mermaid: transparent, no card */
 .mermaid { background: transparent; border-radius: 0; padding: 0; }
