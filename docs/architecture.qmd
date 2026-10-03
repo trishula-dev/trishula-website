@@ -1,0 +1,69 @@
+---
+title: "Architecture"
+subtitle: "Two planes, one decision record per request"
+---
+
+The architecture keeps three responsibilities separated: the **kernel shield** (packet-altitude enforcement), the **userspace engine** (detection), and the **control plane** (declarative policy). Trishula installs *behind* the Gateway API — [NGF](https://github.com/nginx/nginx-gateway-fabric) is the reference data plane (D2) — steering to the engine as a plain backend. The topology is the one operators already run for an inline middleware, minus the middleware hop.
+
+## Component inventory
+
+| Component | Plane | Responsibility |
+|---|---|---|
+| shield (`shield_xdp.c`, `flow_tc.c`) | kernel | L3/L4 ACL, verdict cache, ban table, `TC_ACT_SHOT`, flow events → ringbuf |
+| ingest (`internal/engine/ingest.go`) | userspace | ringbuf drain, struct mirror, transaction assembly |
+| ladder (`internal/engine/ladder.go`) | userspace | S0–S6 short-circuit evaluation, verdict emission |
+| CEL evaluator (`internal/engine/cel`) | userspace | cost-budgeted rule evaluation (S2) |
+| CRS evaluator (embedded Coraza) | userspace | reference WAF engine, PL1+ (S3) |
+| positive security (`internal/engine/positive`) | userspace | OpenAPI 3.1 invariants (S4) |
+| bot detectors (`internal/engine/bot`) | userspace | JA4/JA4S, header order/entropy, behavioural windows (S6) |
+| ban engine (`internal/engine/rateban`) | userspace | ScoredWindowBan scoring + evidence records |
+| operator | control | CRD reconcile → bundle compile → shield map pre-seed |
+| CRDs (`api/v1alpha1`) | control | `WAFPolicy`, `BanPolicy`, feed/intel CRs |
+
+## Data flow per request
+
+```{mermaid}
+sequenceDiagram
+    participant C as client
+    participant G as Gateway (NGF)
+    participant X as XDP/TC shield
+    participant E as engine
+    participant A as app pod
+    C->>G: request
+    G->>X: forward (steered backend)
+    X->>X: S0 pre-clear - ACL? cache? ban?
+    alt kernel verdict
+        X-->>C: TC_ACT_SHOT / pass (0 usertcost)
+    else needs engine
+        X->>E: flow event (ringbuf)
+        E->>E: S1 cache - S2 CEL - S3 CRS - S4 OpenAPI - S6 bots
+        E->>A: proxy (transparent)
+        A-->>E: response
+        E-->>C: response + verdict record (OTLP)
+    end
+```
+
+## Kernel-side invariants
+
+- **Bounded parsing** — header walking is bounded and tail-call bounded (R1: verifier-friendliness is a CI check, not a hope).
+- **Pre-seeded values** — the operator compiles kernel-relevant policy values (ACL entries, ban keys, verdict-cache seeds) into pinned maps; the engine promotes shadow bans via map updates.
+- **16 MiB/node ring buffer** — sized against the R1b overflow analysis; the overflow path is exercised early (TR-03/04).
+
+## Control plane
+
+`WAFPolicy` CRs compile to engine bundles (double-buffered) and, where kernel-relevant, pre-seed shield maps. A `kubectl apply` of a rule takes effect in ≤ 5 s (M9 target, TR-08). Upgrade order is operator → shield → engine; rollback is a CRD-recorded re-pin. Signature/intel feeds are digest-pinned CRs; CRS quarterly bumps arrive as auto-PRs — *the PR is the review*.
+
+## Integration shape
+
+```{mermaid}
+flowchart LR
+    subgraph cluster["kind (lab)"]
+      gw["Gateway<br/>NGF"] --> e["trishula engine<br/>(plain backend service)"]
+      e --> p["demo echo pod"]
+      op["operator"] -- bundles+maps --> e
+      op -- pre-seed --> k["shield maps"]
+      xdp["shield (XDP/TC)"] -.- k
+    end
+```
+
+The secondary `ext_proc` wire-contract variant (variant B, no-hop mode for Envoy-family estates) is feature-gated and tracked as [TR-22](https://github.com/trishula-dev/trishula/issues/22) — the plain-backend mode is the v1 contract (R3: prove the reference lab first).

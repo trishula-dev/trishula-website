@@ -1,0 +1,63 @@
+---
+title: "Trishula"
+subtitle: "An eBPF-native, developer-first Web Application and API Firewall for Kubernetes"
+---
+
+[![License](https://img.shields.io/badge/license-Apache--2.0-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE)
+[![Project board](https://img.shields.io/badge/board-TR%E2%80%9101%E2%80%91036-blue)](https://github.com/orgs/trishula-dev/projects/1)
+
+> **Status: research / pre-alpha.** The design is specified in the PRD (v4) and the research paper; implementation is starting from zero, tracked as [`TR-01` … `TR-36`](https://github.com/orgs/trishula-dev/projects/1). Nothing here should be presumed working yet. This site documents what the project is building and why — it is research for adoption, not a product pitch.
+
+## What Trishula is
+
+Trishula is an open Web Application and API Firewall for Kubernetes that operates at **kernel altitude** while preserving the full userspace detection stack. Three components, two planes, one decision record per request:
+
+```{mermaid}
+flowchart LR
+    subgraph KERNEL["kernel plane"]
+        xdp["eBPF shield<br/>XDP + TC"]
+        maps["maps<br/>ACL · verdict cache · ban table"]
+    end
+    subgraph USER["userspace plane"]
+        ing["ingest<br/>(ringbuf drain)"]
+        lad["detection ladder<br/>S0-S6"]
+    end
+    gw["Gateway API<br/>(NGF reference)"] --> eng["engine"]
+    eng --> app["app pods"]
+    eng -- flows --> lad
+    ing --> xdp
+    xdp --- maps
+    lad -- verdicts --> otel[("OTLP<br/>trishula.verdict.v1")]
+```
+
+- **kernel shield** — an XDP/TC eBPF program: L3/L4 ACLs, a verdict cache and a ban table with `TC_ACT_SHOT` drops, streaming flow events to userspace over a ring buffer. Bounded, tail-call-bounded parsing; verifier-checked in CI; fail-open by default.
+- **userspace engine** — the detection ladder: S0 kernel pre-clear → S1 verdict cache → S2 CEL rules under cost budgets → S3 OWASP CRS via embedded Coraza → S4 OpenAPI positive security → S6 bot detection (JA4, header behaviour).
+- **control plane** — `WAFPolicy` / `BanPolicy` CRDs compiled to engine bundles and shield maps; installed behind the Gateway API (NGF as the reference data plane); rollback as a CRD re-pin, never a hand-hack.
+
+## Why
+
+The WAF is the last security control that never crossed to developer ubiquity. Three curves converge:
+
+1. **Gateway API consolidation** — ingress is standardising on the Gateway API; the edge is being re-plumbed.
+2. **eBPF maturity** — kernel-altitude packet processing is now dependable, inspectable and CO-RE portable.
+3. **AI traffic at the WAF's front door** — agents, scrapers and automated abuse hit exactly the layer the WAF inspects; they mint fingerprints machines can't hide behind.
+
+Negative signatures alone cannot carry a modern estate. Trishula is built **developer-first**: CRD-driven policy, per-route promotion gates (learn → shadow → enforce), and honest, verifiable verdict telemetry — so the people who own the app can own its protection. The [research paper](docs/paper.qmd) states the full argument.
+
+## Design principles
+
+| Principle | Consequence |
+|-----------|-------------|
+| Two planes, one decision | Kernel drops what must be dropped; the engine runs the full detection stack; every verdict is recorded. |
+| Parity, not a rewrite | CRS runs via embedded Coraza as the reference evaluator, with a CI-blocking differential suite. |
+| Fail-open by default | The shield is inline but never a single point of failure; `failureMode` is explicit per policy. |
+| Promotion gates | Any rule moves learn → shadow → enforce; shadow-first for every new detector. |
+| Telemetry as a contract | Every verdict is a correlated OTel span + metric + log; dashboards ship in-repo. |
+| Honest exit criteria | [Phase 0](docs/roadmap.qmd#phase-0-exit-criteria) pass/fail is stated, not implied. |
+
+## Navigate
+
+- [Architecture](docs/architecture.qmd) — the two-plane design, component inventory, data flow.
+- [Detection](docs/detection.qmd) — the ladder stages, CRS parity, CEL, positive security, bots, bans.
+- [Roadmap](docs/roadmap.qmd) — the roadmap board, sprint windows and exit criteria.
+- [Paper](docs/paper.qmd) — the research paper matching the project.

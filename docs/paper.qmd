@@ -1,0 +1,21 @@
+---
+title: "Paper"
+subtitle: "Trishula: An eBPF-Native, Developer-First Web Application and API Firewall for Kubernetes"
+---
+
+The project's research paper (research paper, 18 pp) states the full argument for why this project exists, what it borrows honestly from the field, and what it plans to achieve for developer adoption. It is the scholarly companion to the [PRD v4](https://github.com/trishula-dev/trishula/blob/main/README.md) and the roadmap board.
+
+**Contents of the paper:**
+
+- **§1 — Why we're doing it.** The adoptability thesis: the WAF as the last control that never crossed to developer ubiquity; three converging curves (Gateway API consolidation, eBPF maturity, AI traffic arriving at the WAF's front door); the one-sentence design thesis.
+- **§2 — How it's different.** An honest field survey — Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban, plus the eBPF cousins — with credit for what is borrowed, and the feature-coverage matrix showing nobody occupies the *full detection stack × Kubernetes-native × kernel altitude* quadrant.
+- **§3 — Architecture.** The two-plane principle (decision plane vs. data plane), the ladder, the CRD contract.
+- **§4 — Detection stack.** CRS parity, CEL cost budgets, positive security, bot mechanisms, ScoredWindowBan.
+- **§5 — Kubernetes-native operations.** Operator, bundles, promotion gates, OTel verdict contract.
+- **§6 — Crowdsourcing and community.** CEL rule packs, shared intel, and the path from in-repo rules to a contributory ecosystem.
+- **§7 — The academy.** Teach-the-web modules with runnable labs.
+- **§8 — Adoption plan and what we will do.** Developer-first DX, the 15-minute gate, honest exit criteria.
+
+**Access:** the paper is distributed with the project. A public link is added here when the paper is published to an archive — until then, request it via the repo or watch the release notes. (The canonical PDF lives in the project's internal docs for now.)
+
+> The paper follows the project's honesty mechanisms: borrowed ideas are credited, competitors are described fairly (Table 1), and no capability is claimed that isn't verified in a lab.
