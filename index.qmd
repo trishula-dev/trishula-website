@@ -140,4 +140,8 @@ Contributions welcome: pick an issue labeled `complexity:starter` or any `area:*
 
 ## Paper
 
+::: {.callout-note appearance="simple"}
+**[Download the research paper (PDF)](/assets/trishula-paper.pdf){.download}** — 18 pp (abstract, keywords, contents, numbered references). A link to the arXiv entry lands here when the paper is archived.
+:::
+
 The research paper (*“Trishula: An eBPF-Native, Developer-First Web Application and API Firewall for Kubernetes”*) is the research companion to this site: the adoptability thesis, the honest field survey (Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban, the eBPF cousins) with the feature-coverage matrix, and the adoption plan. A public link lands here when the paper is archived; until then it travels with the project docs.
