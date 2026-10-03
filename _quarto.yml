@@ -7,7 +7,7 @@ project:
 website:
   title: "Trishula"
   description: "Trishula: an eBPF-native, developer-first WAF and API firewall for Kubernetes. Research project for adoption."
-  site-url: https://trishula-dev.github.io/trishula-website/
+  site-url: https://trishula.dev
   repo-url: https://github.com/trishula-dev/trishula-website
   repo-branch: main
   repo-actions: [edit, issue]
@@ -18,12 +18,25 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - href: index.qmd#components--architecture
+        text: Architecture
+      - href: index.qmd#the-waf-problem
+        text: The WAF problem
+      - href: index.qmd#kubernetes-deployment
+        text: Kubernetes
+      - href: index.qmd#roadmap
+        text: Roadmap
+      - href: index.qmd#reasoning-why-these-specific-choices
+        text: Reasoning
     right:
+      - href: index.qmd#paper
+        text: Paper
       - icon: github
         href: https://github.com/trishula-dev
 
 format:
   html:
     theme: cosmo
+    css: assets/styles.css
     toc: true
     code-copy: true

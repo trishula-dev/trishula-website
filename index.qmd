@@ -46,44 +46,63 @@ Three curves converge, and each alone is an optimization. Together they are an o
 
 Negative signatures alone cannot carry a modern estate: too much good traffic to risk, too slow to maintain by hand. That is the reason for the project — and why the emphasis is positive security, fingerprinting and behaviour analysis with signatures as one (important) stage among several.
 
-## Components / architecture
+## The WAF problem
 
-| Component | Plane | Responsibility |
-|---|---|---|
-| shield (`shield_xdp.c`, `flow_tc.c`) | kernel | L3/L4 ACL, verdict cache, ban table, `TC_ACT_SHOT` drops, flow events → ringbuf |
-| engine (ingest, ladder) | userspace | ringbuf drain, transaction assembly, S0–S6 short-circuit ladder |
-| detection stages | userspace | CEL rules (cost-budgeted) · CRS via embedded Coraza · OpenAPI 3.1 positive security · JA4/bot detection · ScoredWindowBan |
-| operator + CRDs | control | `WAFPolicy`/`BanPolicy` → compiled bundles + shield map pre-seed; rollback is a CRD re-pin |
+A web application firewall inspects HTTP conversations and decides: allow, block, rate-suppress or tag. The classic estate runs it in three shapes — an appliance at the edge, a module inside the reverse proxy (ModSecurity-lineage), or a sidecar/car next to the app. Each shape keeps the decision point *outside* the packet path's cheapest altitude, and each inherits the middleware's latency, scaling and failure behaviour.
+
+What a WAF must decide today:
+
+- **known-bad requests** — signature sets (OWASP CRS) remain the base layer;
+- **policy violations** — the request uses the API in ways its OpenAPI spec forbids (positive security);
+- **automation posing as users** — TLS/HTTP fingerprints (JA4), header order, value entropy, behavioural cadence;
+- **abuse patterns** — rate anomalies and repeat-offender behaviour needing temporary bans;
+- **new attack classes** — LLM/agent traffic shapes that no signature has seen yet.
+
+Traditional deployments answer these with a negative-signature engine and hope. The cost is well known: false positives that block good users, rules maintained by specialists, and telemetry a developer cannot read. Trishula's answer is structural: keep CRS as one stage, add the positive/fingerprint/behavioural stages, and move the cheapest decisions to the kernel — with every verdict emitted as OpenTelemetry.
+
+## Kubernetes deployment
 
 ```{mermaid}
-sequenceDiagram
-    participant G as Gateway (NGF)
-    participant X as XDP/TC shield
-    participant E as engine
-    G->>X: forward
-    X->>X: S0: ACL? cache? ban?
-    alt kernel verdict
-        X-->>G: TC_ACT_SHOT / fast-path pass
-    else needs engine
-        X->>E: flow event (ringbuf)
-        E->>E: S2 CEL - S3 CRS - S4 OpenAPI - S6 bots
-        E->>G: verdict + proxy onward (OTLP record)
+flowchart TB
+    subgraph cluster["Kubernetes cluster"]
+        subgraph gwplane["gateway plane"]
+            ngf["NGF (Gateway API)"]
+        end
+        subgraph wafplane["Trishula"]
+            eng["engine deployment<br/>(plain backend Service)"]
+            opr["operator<br/>(WAFPolicy / BanPolicy CRDs)"]
+            sh["shield DaemonSet<br/>(XDP/TC eBPF)"]
+        end
+        app["application pods"]
     end
+    clients["clients"] --> ngf
+    ngf -- HTTPRoute --> eng
+    eng --> sh
+    eng --> app
+    opr -- bundles + map pre-seed --> eng
+    opr -- pinned maps --> sh
 ```
 
-Kernel-side invariants: bounded + tail-call-bounded parsing (verifier-friendliness is a CI check), operator pre-seeded maps, 16 MiB/node ringbuf with its overflow path exercised early, fail-open default with explicit `failureMode` per policy.
+- **Install order:** operator → shield (DaemonSet) → engine. The operator reconciles `WAFPolicy` / `BanPolicy` CRs into compiled engine bundles (double-buffered) and pre-seeds shield maps.
+- **Gateway API integration:** the gateway steers to the engine as a plain backend (HTTPRoute); [NGF](https://github.com/nginx/nginx-gateway-fabric) is the reference data plane — the whole reference stack is OSS. Conformant alternatives (Envoy Gateway, Istio, Traefik, Emissary, kgateway) attach the same way; an `ext_proc` wire-contract variant for Envoy-family estates is feature-gated for later.
+- **Fail-open by default:** an inline shaper must never become the outage; `failureMode` is explicit and audited per policy.
+- **Rollback:** a CRD-recorded re-pin of the previous bundle — never a hand-hack.
+- **Node requirements:** kernel ≥ 5.8; the shield is CO-RE and verifier-checked in CI.
+- **Telemetry:** every verdict is an OTLP span + metric + log on `trishula.verdict.v1`; dashboards ship in-repo.
+
+**Detection ladder** (short-circuit ordered): S0 kernel pre-clear (ACL, verdict cache, ban table) → S1 cache re-check → S2 CEL rules (cost-budgeted) → S3 OWASP CRS via embedded Coraza → S4 OpenAPI positive security → S5 rate limits → S6 bot fingerprints and behavioural windows. ScoredWindowBan turns repeated abuse into kernel-enforced temporary bans, evidence-recorded, prefix escalation off by default.
 
 ## Roadmap
 
 Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) (org Project) as issues [TR-01 … TR-36](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion — prove the ladder end-to-end, not slide-by-slide.
 
-| Window | Items |
+| Milestone | Items |
 |---|---|
 | **v0.1** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit |
 | **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane |
 | **v0.3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
 
-Phase 0 exit criteria (checked honestly in TR-14): shield attaches on a kind node with kernel-side ban drop working · ladder end-to-end verdict logging · CRS PL1 parity reported in shadow · CRD round-trip ≤ 5 s · NGF steers to the engine in kind · span+metric+log correlate per request.
+Contributions welcome: pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (Apache-2.0).
 
 ## Reasoning: why these specific choices
 

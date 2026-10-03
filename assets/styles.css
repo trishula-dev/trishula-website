@@ -1,19 +1,26 @@
-/* Trishula docs - small overrides on top of the cosmo theme */
-.navbar .navbar-brand {
-  font-weight: 700;
-  letter-spacing: 0.3px;
-}
-/* mermaid diagrams: no card, no tint */
-.mermaid {
+/* Trishula docs — overrides on the cosmo theme */
+.navbar .navbar-brand { font-weight: 700; letter-spacing: 0.3px; }
+
+/* callouts: purple left rule, dashed feel, NO fill */
+.callout {
   background: transparent;
+  border: none;
+  border-left: 3px dashed #712cf9;
   border-radius: 0;
-  padding: 0;
+  box-shadow: none;
+  padding: 0.6rem 1rem 0.6rem 1.1rem;
 }
-.mermaid svg {
+.callout > .callout-body { background: transparent; }
+.callout-callout, .callout-note, .callout.callout-style-simple {
   background: transparent;
 }
-img.figure-img,
-svg {
-  max-width: 100%;
-  height: auto;
-}
+.callout .callout-title { color: #712cf9; font-weight: 600; }
+.callout-note .callout-icon { color: #712cf9; }
+/* strip any residual tinted backgrounds on default callout variants */
+.callout-style-default { background: transparent; border-left: 3px dashed #712cf9; }
+.callout-style-default > .callout-header { background: transparent; }
+
+/* mermaid: transparent, no card */
+.mermaid { background: transparent; border-radius: 0; padding: 0; }
+.mermaid svg { background: transparent; }
+img.figure-img, svg { max-width: 100%; height: auto; }
