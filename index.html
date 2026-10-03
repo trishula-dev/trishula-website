@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trishula — eBPF-native WAF &amp; API protection for Kubernetes</title>
+<meta name="description" content="Trishula is an open-source, eBPF-native, developer-first web application and API firewall for Kubernetes: kernel-altitude packet shield, userspace detection engine, Kubernetes-native control plane.">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">🔱</span>
+      <div>
+        <div class="name">TRISHULA</div>
+        <div class="tag">kernel shield &middot; userspace engine &middot; control plane</div>
+      </div>
+    </div>
+    <nav>
+      <a href="#why">Why</a>
+      <a href="#how">How it works</a>
+      <a href="#different">How it's different</a>
+      <a href="#status">Status</a>
+      <a href="#get-involved">Get involved</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <p class="kicker">Open source &middot; Apache-2.0 &middot; trishula.dev</p>
+      <h1>The WAF is the last control<br>that never crossed to developers.</h1>
+      <p class="lede">Trishula moves web application and API protection to kernel altitude on
+      Kubernetes: an eBPF shield drops what must be dropped in the packet path, a userspace
+      engine runs the full detection stack you already trust — OWASP CRS, CEL rules, positive
+      security from OpenAPI, bot detection — and a Kubernetes-native control plane ties policy,
+      rollouts and verdict telemetry together. Decisions land in OpenTelemetry, not syslog.</p>
+      <p class="cta">
+        <a class="btn primary" href="https://github.com/trishula-dev/trishula">github.com/trishula-dev/trishula</a>
+        <a class="btn" href="#status">Read the roadmap</a>
+      </p>
+    </div>
+  </section>
+
+  <section id="why" class="section">
+    <div class="wrap">
+      <h2>Why Trishula</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>Three curves are converging</h3>
+          <p>Kubernetes ingress is consolidating onto the Gateway API; eBPF has matured into a
+          dependable platform for kernel-altitude packet processing; and AI-generated traffic —
+          agents, scrapers, automated abuse — is arriving at exactly the layer the WAF inspects.
+          Each alone is an optimization. Together they are a new opening.</p>
+        </div>
+        <div class="card">
+          <h3>Adoptability is a feature</h3>
+          <p>Negative signatures alone cannot carry a modern estate: too much good traffic to
+          miss, too slow to maintain by hand. Trishula is built developer-first — CRD-driven
+          policy, per-route promotion gates from learn to shadow to enforce, and honest,
+          verifiable verdict telemetry — so the people who own the app can own its protection.</p>
+        </div>
+        <div class="card">
+          <h3>Full detection stack, kernel altitude</h3>
+          <p>Most WAFs give you one plane. Trishula pairs a bounded, fail-open-by-default eBPF
+          shield with the complete detection stack in userspace — you keep the detection quality
+          of a real WAF and gain a kernel-altitude enforcement point that a plain middleware
+          chain can never offer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" class="section alt">
+    <div class="wrap">
+      <h2>How it works</h2>
+      <p>Three components, two planes, one decision record per request.</p>
+      <div class="grid3">
+        <div class="plane">
+          <div class="plane-title">kernel shield</div>
+          <p>An XDP/TC eBPF program: L3/L4 ACLs, a verdict cache and a ban table with TC_ACT_SHOT
+          drops, plus flow events streamed to userspace over a ring buffer. Parsing is bounded and
+          tail-call bounded, verifier-verified in CI. Pre-cleared flows never pay userspace cost.</p>
+        </div>
+        <div class="plane">
+          <div class="plane-title">userspace engine</div>
+          <p>The detection ladder: S0 kernel pre-clear &rarr; S1 verdict cache &rarr; S2 CEL rules
+          &rarr; S3 OWASP CRS via embedded Coraza &rarr; S4 positive security (OpenAPI 3.1)
+          &rarr; S6 bot detection (JA4, header behaviour). Short-circuit ordering; every verdict
+          recorded.</p>
+        </div>
+        <div class="plane">
+          <div class="plane-title">control plane</div>
+          <p>WAFPolicy and BanPolicy CRDs compiled to engine bundles and shield maps. Installed
+          behind the Gateway API — NGF as the reference data plane — steering to the engine as a
+          plain backend. Rollback is a CRD re-pin, never a hand-hack.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="different" class="section">
+    <div class="wrap">
+      <h2>How it's different</h2>
+      <p>Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban — each earns its keep, and
+      Trishula borrows deliberately from them. What nobody yet occupies is the quadrant where the
+      full detection stack meets Kubernetes-native operations and a kernel-altitude enforcement
+      point. Trishula is built to hold that quadrant:</p>
+      <ul class="points">
+        <li><strong>Parity, not a rewrite</strong> — CRS runs via embedded Coraza as the reference
+        evaluator, with a CI-blocking differential suite proving the engine matches it.</li>
+        <li><strong>Positive security from day one</strong> — OpenAPI-derived route invariants with
+        learn &rarr; shadow &rarr; enforce promotion gates.</li>
+        <li><strong>Bot mechanisms, not just signatures</strong> — JA4 fingerprints, header-order
+        and behavioural windows feeding an evidence-recorded ban engine.</li>
+        <li><strong>ScoredWindowBan</strong> — fail2ban-style behaviour bans with an
+        algorithmic scoring window, prefix escalation off by default, every ban carrying evidence.</li>
+        <li><strong>Telemetry as a contract</strong> — every verdict is a correlated
+        OpenTelemetry span + metric + log; dashboards ship in-repo.</li>
+        <li><strong>Crowdsourced rules</strong> — CEL rule packs and shared intel start in-repo and
+        graduate upstream as the community forms.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="status" class="section alt">
+    <div class="wrap">
+      <h2>Status &amp; roadmap</h2>
+      <p><strong>Pre-alpha.</strong> The kernel shield, userspace engine and operator are being
+      built in the open, sprint by sprint. Work is tracked as issues labeled by target window —
+      the board below aggregates them.</p>
+      <div class="timeline">
+        <div class="tl-item"><span class="tl-when">now</span><div><strong>PoC ladder</strong> —
+        XDP/TC shield PoC, ringbuf ingest, HTTP/1 + detection ladder slice, CEL rules, CRS
+        differential in shadow, CRD round-trip, NGF steering lab.</div></div>
+        <div class="tl-item"><span class="tl-when">next</span><div><strong>Depth</strong> —
+        HTTP/2/gRPC reconstruction, Vectorscan hot path, CEL hot reload, OpenAPI learn mode,
+        behavioural bot v1, the full rate-limit ladder, ONNX scorer, bench harness to the
+        latency/throughput targets.</div></div>
+        <div class="tl-item"><span class="tl-when">later</span><div><strong>Community &amp;
+        reach</strong> — academy labs, HTTP/3 posture evaluation, behavioural DoS detectors, DPU
+        evaluation, multi-arch builds, uninstall residue gate.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="get-involved" class="section">
+    <div class="wrap">
+      <h2>Get involved</h2>
+      <p>Everything is Apache-2.0. Watch the repos, read the PRD, pick up a labeled issue —
+      <code>good first issue</code> and <code>area:*</code> labels mark entry points. The project
+      board is where every sprint target is tracked.</p>
+      <p class="cta">
+        <a class="btn primary" href="https://github.com/orgs/trishula-dev/projects">Project board</a>
+        <a class="btn" href="https://github.com/trishula-dev">Org on GitHub</a>
+      </p>
+      <p class="fine">Paper: <em>“Trishula: An eBPF-Native, Developer-First Web Application and API
+      Firewall for Kubernetes.”</em> Contact: shain.singh@owasp.org.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>trishula.dev &mdash; eBPF-native WAF &amp; API protection for Kubernetes</span>
+    <span>Apache-2.0 &middot; built in the open</span>
+  </div>
+</footer>
+</body>
+</html>
