@@ -35,3 +35,52 @@ div.callout .callout-body-container { border-left: none !important; }
 .mermaid { background: transparent; border-radius: 0; padding: 0; }
 .mermaid svg { background: transparent; }
 img.figure-img, svg { max-width: 100%; height: auto; }
+
+/* --- mermaid: dotted purple area boxes, NO gray fill anywhere ---
+   spec: nodes/areas drawn as transparent boxes with a purple dotted outline;
+   edge labels lose their gray pills; text stays on the page background */
+.mermaid svg {
+  background: transparent;
+}
+/* node + cluster rectangles */
+.mermaid svg .node rect,
+.mermaid svg .node circle,
+.mermaid svg .node polygon,
+.mermaid svg .node path,
+.mermaid svg .cluster rect {
+  fill: transparent !important;
+  stroke: #712cf9 !important;
+  stroke-width: 1.6px !important;
+  stroke-dasharray: 5 4 !important;
+}
+/* edge label pills + their bkg rects */
+.mermaid svg .edgeLabel rect,
+.mermaid svg .edgeLabel polygon,
+.mermaid svg .edgeLabel p,
+.mermaid svg .edgeLabel span,
+.mermaid svg .edgeLabel foreignObject div,
+.mermaid svg .labelBkg {
+  fill: transparent !important;
+  background: transparent !important;
+}
+.mermaid svg .edgeLabel .label,
+.mermaid svg .edgeLabel foreignObject {
+  background: transparent !important;
+}
+/* arrowheads: purple */
+.mermaid svg marker path {
+  fill: #712cf9 !important;
+  stroke: #712cf9 !important;
+}
+/* edge paths: thin purple */
+.mermaid svg .flowchart-link,
+.mermaid svg path.flowchart-link {
+  stroke: #712cf9 !important;
+  stroke-width: 1.3px !important;
+}
+/* inline-code chips: drop the gray slab */
+body code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
