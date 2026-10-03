@@ -1,7 +1,7 @@
 /* Trishula docs — overrides on the cosmo theme */
 .navbar .navbar-brand { font-weight: 700; letter-spacing: 0.3px; }
 
-/* Callouts: NO fill, purple dashed left rule (user spec) — high specificity to beat theme tints */
+/* Callouts: NO fill, purple dashed left rule — high specificity to beat theme tints */
 div.callout,
 div.callout.callout-style-simple,
 div.callout.callout-style-default,
@@ -15,7 +15,6 @@ div.callout.callout-titled {
 }
 div.callout .callout-header,
 div.callout .callout-body,
-div.callout .callout-titled-band,
 div.callout .callout-body-container {
   background: transparent !important;
   border: none !important;
@@ -28,53 +27,48 @@ div.callout .callout-icon-container {
   background: transparent !important;
   border: none !important;
 }
-/* hide the double left border some themes paint on the body container */
-div.callout .callout-body-container { border-left: none !important; }
 
-/* mermaid: transparent, no card */
-.mermaid { background: transparent; border-radius: 0; padding: 0; }
-.mermaid svg { background: transparent; }
-img.figure-img, svg { max-width: 100%; height: auto; }
-
-/* --- mermaid: dotted purple area boxes, NO gray fill anywhere ---
-   spec: nodes/areas drawn as transparent boxes with a purple dotted outline;
-   edge labels lose their gray pills; text stays on the page background */
-.mermaid svg {
+/* --- mermaid diagrams: dotted purple line boxes, NO fill (gray or otherwise) ---
+   quarto renders mermaid as <svg class="flowchart mermaid-js">; target all its parts. */
+svg.mermaid-js {
   background: transparent;
 }
-/* node + cluster rectangles */
-.mermaid svg .node rect,
-.mermaid svg .node circle,
-.mermaid svg .node polygon,
-.mermaid svg .node path,
-.mermaid svg .cluster rect {
+/* node boxes + subgraph (area) boxes: transparent fill, purple dotted outline */
+svg.mermaid-js g.node rect.basic.label-container,
+svg.mermaid-js g.node rect,
+svg.mermaid-js g.node circle,
+svg.mermaid-js g.node polygon,
+svg.mermaid-js g.node path,
+svg.mermaid-js g.cluster rect {
   fill: transparent !important;
   stroke: #712cf9 !important;
   stroke-width: 1.6px !important;
   stroke-dasharray: 5 4 !important;
 }
-/* edge label pills + their bkg rects */
-.mermaid svg .edgeLabel rect,
-.mermaid svg .edgeLabel polygon,
-.mermaid svg .edgeLabel p,
-.mermaid svg .edgeLabel span,
-.mermaid svg .edgeLabel foreignObject div,
-.mermaid svg .labelBkg {
+/* subgraph AREA boxes slightly thicker (they encompass the others) */
+svg.mermaid-js g.cluster rect {
+  stroke-width: 2px !important;
+}
+/* edge label pills (gray slabs / bkg rects) */
+svg.mermaid-js g.edgeLabel rect,
+svg.mermaid-js g.edgeLabel polygon,
+svg.mermaid-js g.edgeLabel p,
+svg.mermaid-js g.edgeLabel span,
+svg.mermaid-js g.edgeLabel foreignObject,
+svg.mermaid-js g.edgeLabel foreignObject div,
+svg.mermaid-js g.edgeLabel foreignObject span,
+svg.mermaid-js g.edgeLabel foreignObject p {
   fill: transparent !important;
   background: transparent !important;
+  border: none !important;
 }
-.mermaid svg .edgeLabel .label,
-.mermaid svg .edgeLabel foreignObject {
-  background: transparent !important;
-}
-/* arrowheads: purple */
-.mermaid svg marker path {
+/* arrowheads + edge lines: purple */
+svg.mermaid-js marker path {
   fill: #712cf9 !important;
   stroke: #712cf9 !important;
 }
-/* edge paths: thin purple */
-.mermaid svg .flowchart-link,
-.mermaid svg path.flowchart-link {
+svg.mermaid-js path.flowchart-link,
+svg.mermaid-js .flowchart-link {
   stroke: #712cf9 !important;
   stroke-width: 1.3px !important;
 }
@@ -84,3 +78,7 @@ body code {
   border: none;
   padding: 0;
 }
+
+/* mermaid container: no card */
+.mermaid { background: transparent; border-radius: 0; padding: 0; }
+img.figure-img, svg { max-width: 100%; height: auto; }
