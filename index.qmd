@@ -6,7 +6,7 @@ subtitle: "An eBPF-native, developer-first Web Application and API Firewall for 
 [![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/trishula-dev/trishula/badge)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/orgs/trishula-dev/projects/1) [![site-check](https://github.com/trishula-dev/trishula-website/actions/workflows/site-check.yml/badge.svg)](https://github.com/trishula-dev/trishula-website/actions/workflows/site-check.yml)
 
 
-[![License](https://img.shields.io/badge/license-Apache--2.0-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE)
 [![Project board](https://img.shields.io/badge/board-TR%E2%80%9101%E2%80%91036-blue)](https://github.com/orgs/trishula-dev/projects/1)
 
 ::: {.callout-note appearance="simple"}
@@ -128,7 +128,7 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 | **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane |
 | **v0.3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
 
-Contributions welcome: pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (Apache-2.0).
+Contributions welcome: pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (MIT).
 
 ## Reasoning: why these specific choices
 
