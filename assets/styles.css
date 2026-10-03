@@ -82,3 +82,14 @@ body code {
 /* mermaid container: no card */
 .mermaid { background: transparent; border-radius: 0; padding: 0; }
 img.figure-img, svg { max-width: 100%; height: auto; }
+
+/* edge-label text: keep readable on the page background */
+svg.mermaid-js g.edgeLabel foreignObject div,
+svg.mermaid-js g.edgeLabel span,
+svg.mermaid-js g.edgeLabel p {
+  color: #444 !important;
+}
+svg.mermaid-js g.edgeLabel .edgeLabel,
+svg.mermaid-js g.edgeLabel .labelBkg {
+  background: transparent !important;
+}
