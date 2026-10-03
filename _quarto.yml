@@ -3,59 +3,27 @@ project:
   output-dir: _site
   render:
     - "index.qmd"
-    - "docs/*.qmd"
 
 website:
   title: "Trishula"
-  description: "Trishula: an eBPF-native, developer-first Web Application and API Firewall for Kubernetes. Research project for adoption — kernel shield, userspace engine, Kubernetes-native control plane."
-  page-navigation: true
+  description: "Trishula: an eBPF-native, developer-first WAF and API firewall for Kubernetes. Research project for adoption."
   site-url: https://trishula-dev.github.io/trishula-website/
   repo-url: https://github.com/trishula-dev/trishula-website
   repo-branch: main
   repo-actions: [edit, issue]
   open-graph: true
-  search:
-    location: navbar
-    type: overlay
   navbar:
     background: dark
     pinned: true
     left:
       - href: index.qmd
         text: Home
-      - href: docs/architecture.qmd
-        text: Architecture
-      - href: docs/detection.qmd
-        text: Detection
-      - href: docs/roadmap.qmd
-        text: Roadmap
-      - href: docs/paper.qmd
-        text: Paper
     right:
-      - href: docs/branding.qmd
-        text: Branding
-      - href: docs/roadmap.qmd
-        text: ""
       - icon: github
         href: https://github.com/trishula-dev
-  sidebar:
-    style: floating
-    collapsed: false
-    contents:
-      - index.qmd
-      - section: "Docs"
-        contents:
-          - docs/architecture.qmd
-          - docs/detection.qmd
-      - section: "Project"
-        contents:
-          - docs/roadmap.qmd
-          - docs/paper.qmd
-          - docs/branding.qmd
 
 format:
   html:
     theme: cosmo
-    css: assets/styles.css
     toc: true
     code-copy: true
