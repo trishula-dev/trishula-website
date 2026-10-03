@@ -3,7 +3,7 @@ title: "Trishula"
 subtitle: "An eBPF-native, developer-first Web Application and API Firewall for Kubernetes"
 ---
 
-[![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](https://github.com/orgs/trishula-dev/projects/1) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![OpenSSF Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15183)
+[![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![version](https://img.shields.io/badge/version-v0.1.0-blue)](https://github.com/orgs/trishula-dev/projects/1) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![OpenSSF Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15183)
 
 ::: {.callout-note appearance="simple"}
 **Status: research / pre-alpha.** Design is specified in the PRD (v4) and the research paper; implementation starts from zero, tracked as [TR-01 … TR-36](https://github.com/orgs/trishula-dev/projects/1). Nothing here should be presumed working yet. This is research for adoption — not a product pitch.
