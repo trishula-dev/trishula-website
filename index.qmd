@@ -36,6 +36,29 @@ flowchart LR
 3. **Parity before novelty** — OWASP CRS runs via embedded Coraza as the reference evaluator; a CI-blocking differential suite proves the engine matches it, always.
 4. **Honest engineering** — fail-open defaults, evidence records for every ban, exit criteria that report pass/fail as measured.
 
+## Teaching, education and adoption
+
+Security technology only spreads when it gets simpler to adopt, not more powerful. The history is consistent:
+
+| Precedent | What was hard | What made adoption cross over |
+|---|---|---|
+| Let's Encrypt | PKI was an expert discipline; certs cost money and ops time | One command (`certbot`), automation, free certs — TLS went from 40% to 90%+ of the web |
+| fail2ban | log-analysis and blocking were manual sec-ops work | A single daemon watched logs and banned offenders automatically — behaviour blocking became normal |
+| Caddy / nginx + cert-manager | TLS termination per-service was hand-configured | Convention-first configs made correct TLS the default path |
+| OWASP CRS | WAF rules were vendor black boxes | An open, community-maintained rule set made signature quality inspectable and shared |
+| Kubernetes Gateway API | every edge had its own config dialect | Standard CRDs made edge policy portable and reviewable like code |
+
+Trishula aims at the same crossing for the WAF. The teaching plan is the mechanism, not an afterthought:
+
+- **Academy modules with runnable labs** (PRD §7; [TR-27](https://github.com/trishula-dev/trishula/issues/27), [TR-28](https://github.com/trishula-dev/trishula/issues/28)) — HTTP on the wire, TLS, headers, fingerprints, positive security; each module is a hands-on lab against a live cluster, not slides.
+- **The 15-minute gate** ([TR-23](https://github.com/trishula-dev/trishula/issues/23), metric M3) — clone → first enforced rule in ≤ 15 minutes, timed nightly in CI. If it regresses, the release does not ship.
+- **Copy-paste-first policy recipes** — every lab ships the exact YAML a developer would commit; no dashboards required to understand a rule.
+- **Promotion gates as pedagogy** — learn → shadow → enforce isn't just a safety mechanism, it's the adoption journey: observe first, intervene second. Each stage has a lab.
+- **Verdict telemetry a developer can read** — one correlated OTel record per request; dashboards ship in-repo; the record schema (`trishula.verdict.v1`) is documented like an API, because it is one.
+- **Honest exit criteria** — every release states what works and what does not (the README checklist pattern adopted from the PRD's honesty mechanisms §18). Nothing to reverse-engineer.
+
+The audience is the application developer and the platform engineer who already runs Kubernetes — not the WAF specialist. Everything in the docs, labs and error messages is written to be understood at that level first.
+
 ## Why this project
 
 Three curves converge, and each alone is an optimization. Together they are an opening:

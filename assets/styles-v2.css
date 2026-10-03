@@ -49,19 +49,26 @@ svg.mermaid-js g.cluster rect {
 svg.mermaid-js g.cluster rect {
   stroke-width: 2px !important;
 }
-/* edge label pills (gray slabs / bkg rects) */
+/* edge labels: OPAQUE white cushion so text never overlaps the purple line */
 svg.mermaid-js g.edgeLabel rect,
 svg.mermaid-js g.edgeLabel polygon,
-svg.mermaid-js g.edgeLabel p,
-svg.mermaid-js g.edgeLabel span,
-svg.mermaid-js g.edgeLabel foreignObject,
-svg.mermaid-js g.edgeLabel foreignObject div,
-svg.mermaid-js g.edgeLabel foreignObject span,
-svg.mermaid-js g.edgeLabel foreignObject p {
-  fill: transparent !important;
-  background: transparent !important;
+svg.mermaid-js g.edgeLabel .labelBkg {
+  fill: #ffffff !important;
+  fill-opacity: 1 !important;
+  background: #ffffff !important;
   border: none !important;
 }
+svg.mermaid-js g.edgeLabel foreignObject,
+svg.mermaid-js g.edgeLabel foreignObject div,
+svg.mermaid-js g.edgeLabel span,
+svg.mermaid-js g.edgeLabel p {
+  fill: transparent !important;
+  background: #ffffff !important;
+  border: none !important;
+  color: #333 !important;
+}
+/* spacing so labels never crowd node borders */
+svg.mermaid-js g.edgeLabel .label { padding: 0 4px; }
 /* arrowheads + edge lines: purple */
 svg.mermaid-js marker path {
   fill: #712cf9 !important;
@@ -92,4 +99,16 @@ svg.mermaid-js g.edgeLabel p {
 svg.mermaid-js g.edgeLabel .edgeLabel,
 svg.mermaid-js g.edgeLabel .labelBkg {
   background: transparent !important;
+}
+
+/* node label padding inside dotted boxes — text must not touch the borders */
+svg.mermaid-js g.node foreignObject div,
+svg.mermaid-js g.node foreignObject span,
+svg.mermaid-js g.node foreignObject p {
+  padding: 4px 8px !important;
+  line-height: 1.35 !important;
+}
+svg.mermaid-js g.cluster foreignObject div,
+svg.mermaid-js g.cluster foreignObject span {
+  padding: 2px 8px !important;
 }

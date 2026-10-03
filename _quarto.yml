@@ -24,6 +24,8 @@ website:
         text: The WAF problem
       - href: index.qmd#kubernetes-deployment
         text: Kubernetes
+      - href: index.qmd#teaching-education-and-adoption
+        text: Education
       - href: index.qmd#roadmap
         text: Roadmap
       - href: index.qmd#reasoning-why-these-specific-choices
