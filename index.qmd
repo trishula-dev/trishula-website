@@ -6,7 +6,7 @@ subtitle: "An eBPF-native, developer-first Web Application and API Firewall for 
 [![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![version](https://img.shields.io/badge/version-v0.1.0-blue)](https://github.com/orgs/trishula-dev/projects/1) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![OpenSSF Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15183)
 
 ::: {.callout-note appearance="simple"}
-**Status: research / pre-alpha.** Design is specified in the PRD (v4) and the research paper; implementation starts from zero, tracked as [TR-01 … TR-36](https://github.com/orgs/trishula-dev/projects/1). Nothing here should be presumed working yet. This is research for adoption — not a product pitch.
+**Status: research / pre-alpha.** Design is specified in the PRD (v4) and the research paper; implementation starts from zero, tracked as [TR-01 … TR-41](https://github.com/orgs/trishula-dev/projects/1). Nothing here should be presumed working yet. This is research for adoption — not a product pitch.
 :::
 
 ## Why this project
@@ -119,14 +119,14 @@ The audience is the application developer and platform engineer who already runs
 
 ## Roadmap
 
-Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) (org Project) as issues [TR-01 … TR-36](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion — prove the ladder end-to-end, not slide-by-slide.
+Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) (org Project) as issues [TR-01 … TR-41](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion — prove the ladder end-to-end, not slide-by-slide.
 
 | Milestone | Items |
 |---|---|
 | **v0.1** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit |
 | **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane |
 | **v0.3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
-
+| **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): socket-plane L7 fast path study (Beeline), WAFPolicy→eBPF compiler spike, kernel-altitude TLS posture (kTLS vs no-key signals) |
 Contributions follow the [contributing guide](contributing.html): pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (MIT).
 
 ## Paper
