@@ -6,8 +6,22 @@ subtitle: "An eBPF-native, developer-first Web Application and API Firewall for 
 [![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![version](https://img.shields.io/badge/version-v0.1.0-blue)](https://github.com/orgs/trishula-dev/projects/1) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![OpenSSF Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15183)
 
 ::: {.callout-note appearance="simple"}
-**Status: research / pre-alpha.** Design is specified in the PRD (v4) and the research paper; implementation starts from zero, tracked as [TR-01 … TR-41](https://github.com/orgs/trishula-dev/projects/1). Nothing here should be presumed working yet. This is research for adoption — not a product pitch.
+**Status: research / pre-alpha.** Design is specified in the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md) (v4) and the research paper; implementation starts from zero, tracked as [TR-01 … TR-41](https://github.com/orgs/trishula-dev/projects/1) with the [PRD index](https://github.com/trishula-dev/trishula/issues/56) mapping every item to its design sections. Nothing here should be presumed working yet. This is research for adoption — not a product pitch.
 :::
+
+## What Trishula is — concretely
+
+Trishula is a web application and API firewall for Kubernetes, assembled from three Kubernetes workloads you install with Helm and configure with `kubectl apply`:
+
+1. **`trishula-shield`** — a DaemonSet that attaches eBPF programs at two kernel altitudes: **XDP** on every node's NIC (drop L3/L4 abuse at ~µs cost: IP ACLs, SYN/UDP-flood tarpits, repeat-offender bans, cached verdicts) and **TC** on engine-node interfaces (flow classification, rate counters, event stream to the engine).
+2. **`trishula-engine`** — a Deployment the gateway steers protected routes through (a plain Service behind an `HTTPRoute`), running the full HTTP inspection ladder in userspace: **OWASP CRS** via embedded Coraza, developer-written **CEL rules**, **OpenAPI positive security** (block anything a route's schema doesn't declare; learn undeclared behaviour instead of blocking it), **JA4 + header + behavioural bot detection**, **per-route rate limits**, and a scored **temporary-ban engine** (fail2ban's findtime/threshold/bantime model, re-specified for HTTP and kernel-enforced).
+3. **`trishula-operator`** — a Deployment watching four CRDs (`WAFPolicy`, `APISpec`, `RuleSet`, `BanPolicy`) and compiling them into signed bundles: evaluator chains, a Vectorscan matcher DB for the hot regex subset, kernel map values, ban thresholds. Hot reload ≤ 5 s target; rollback is re-pinning the previous bundle, recorded in the CRD.
+
+**What a developer actually writes:** a CEL expression over a structured request view (`request.method == "POST" && path.matches("/v1/chat/*") && size(request.body.?json.messages) > 128`), the OpenAPI spec their API already has, and four YAML CRDs. No proprietary rule language, no vendor console, no sidecar config files.
+
+**What it stops, specifically:** credential stuffing (auth-failure ratios + JA4 heterogeneity → scored bans · §12–13), request smuggling (strict normalization + a dedicated differential corpus · §18.2), slowloris/connection starvation (kernel flow counters, which per-request WAFs cannot see · §13.7), layered DoS on expensive AI endpoints (token-metered routes get per-route rate ladders + ban escalation · §13.2), prompt-injection-shaped payload abuse (ML scorer cascade with async judge · §14), known bot/tooling masquerades (JA4 + header order/entropy fingerprints vs a digest-pinned tooling DB · §12.1), and the OWASP Top-10 (CRS 4.x, with a CI-blocking verdict-parity gate · §11.2/§11.8).
+
+**What it does not do (v1):** it is not a service mesh, not a secrets vault, not an endpoint picker, has no web console (your OTel backend is the console), and claims nothing for HTTP/3 yet ([TR-29](https://github.com/trishula-dev/trishula/issues/29)). Performance numbers are labelled targets until the benchmark plan ([TR-24](https://github.com/trishula-dev/trishula/issues/24)) measures them.
 
 ## Why this project
 
@@ -126,7 +140,7 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 | **v0.1** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit |
 | **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane |
 | **v0.3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
-| **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): socket-plane L7 fast path study (Beeline), WAFPolicy→eBPF compiler spike, kernel-altitude TLS posture (kTLS vs no-key signals) |
+| **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): socket-plane L7 fast path study (Beeline), WAFPolicy→eBPF compiler spike, kernel-altitude TLS posture (kTLS vs no-key signals); specified in PRD §9.7/§9.9 |
 Contributions follow the [contributing guide](contributing.html): pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (MIT).
 
 ## Paper
@@ -139,4 +153,4 @@ The research paper (*“Trishula: An eBPF-Native, Developer-First Web Applicatio
 
 ## Project documents
 
-The [security policy](security.html) covers reporting a vulnerability, supported versions and disclosure expectations. The [contributing guide](contributing.html) covers branching, commit conventions, signing and CI gates. The [code of conduct](code-of-conduct.html) governs participation in all project spaces.
+The [security policy](security.html) covers reporting a vulnerability, supported versions and disclosure expectations. The [contributing guide](contributing.html) covers branching, commit conventions, signing and CI gates. The [code of conduct](code-of-conduct.html) governs participation in all project spaces. The full product specification is the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md) (public edition, `docs/PRD.md` in the main repo; rendered PDF is a release asset).
