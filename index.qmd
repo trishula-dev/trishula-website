@@ -33,6 +33,13 @@ A web application firewall inspects HTTP traffic and decides: allow, block, rate
 
 Negative signatures alone cannot carry this load: too much good traffic to risk, too slow to maintain by hand. The project's premise is therefore positive security, fingerprinting and behaviour analysis, with signatures as one (important) stage among several.
 
+## Objectives
+
+1. **Adoptability as a first-class feature** — CRD-driven policy, per-route promotion gates (learn → shadow → enforce), verdict telemetry a developer can directly interpret. The people who own the application own its protection.
+2. **Full detection stack at kernel altitude** — negative signatures, positive security, bot detection and behaviour bans, backed by an eBPF enforcement point a middleware chain cannot offer.
+3. **Parity before novelty** — OWASP CRS runs via embedded Coraza as the reference evaluator; a CI-blocking differential suite verifies the engine matches it.
+4. **Honest engineering** — fail-open defaults, evidence records for every ban, exit criteria reporting pass/fail as measured.
+
 ## How Trishula works
 
 Trishula pairs a kernel-altitude eBPF shield with a full userspace detection ladder. Three components, two planes, one decision record per request:
@@ -57,13 +64,6 @@ flowchart LR
     xdp --- maps
     lad -- verdicts --> otel[("OTLP<br/>trishula.verdict.v1")]
 ```
-
-## Objectives
-
-1. **Adoptability as a first-class feature** — CRD-driven policy, per-route promotion gates (learn → shadow → enforce), verdict telemetry a developer can directly interpret. The people who own the application own its protection.
-2. **Full detection stack at kernel altitude** — negative signatures, positive security, bot detection and behaviour bans, backed by an eBPF enforcement point a middleware chain cannot offer.
-3. **Parity before novelty** — OWASP CRS runs via embedded Coraza as the reference evaluator; a CI-blocking differential suite verifies the engine matches it.
-4. **Honest engineering** — fail-open defaults, evidence records for every ban, exit criteria reporting pass/fail as measured.
 
 ## Deployment model
 
@@ -143,6 +143,10 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 | **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): socket-plane L7 fast path study (Beeline), WAFPolicy→eBPF compiler spike, kernel-altitude TLS posture (kTLS vs no-key signals); specified in PRD §9.7/§9.9 |
 Contributions follow the [contributing guide](contributing.html): pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (MIT).
 
+## Project documents
+
+The [security policy](security.html) covers reporting a vulnerability, supported versions and disclosure expectations. The [contributing guide](contributing.html) covers branching, commit conventions, signing and CI gates. The [code of conduct](code-of-conduct.html) governs participation in all project spaces. The full product specification is the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md) (public edition, `docs/PRD.md` in the main repo; rendered PDF is a release asset).
+
 ## Paper
 
 ::: {.callout-note appearance="simple"}
@@ -150,7 +154,3 @@ Contributions follow the [contributing guide](contributing.html): pick an issue 
 :::
 
 The research paper (*“Trishula: An eBPF-Native, Developer-First Web Application and API Firewall for Kubernetes”*) is the research companion to this site: the adoptability thesis, the field survey (Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban, the eBPF cousins) with the feature-coverage matrix, and the adoption plan. A public link lands here when the paper is archived; until then it travels with the project docs.
-
-## Project documents
-
-The [security policy](security.html) covers reporting a vulnerability, supported versions and disclosure expectations. The [contributing guide](contributing.html) covers branching, commit conventions, signing and CI gates. The [code of conduct](code-of-conduct.html) governs participation in all project spaces. The full product specification is the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md) (public edition, `docs/PRD.md` in the main repo; rendered PDF is a release asset).

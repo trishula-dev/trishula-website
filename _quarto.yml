@@ -23,23 +23,23 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - href: index.qmd#how-trishula-works
-        text: Architecture
       - href: index.qmd#objectives
         text: Objectives
+      - href: index.qmd#how-trishula-works
+        text: Architecture
       - href: index.qmd#deployment-model
         text: Deployment
       - href: building.qmd
-        text: Building
+        text: Build
     right:
       - href: roadmap.qmd
         text: Roadmap
-      - href: index.qmd#paper
-        text: Paper
       - href: contributing.qmd
         text: Contributing
       - href: security.qmd
         text: Security
+      - href: index.qmd#paper
+        text: Paper
       - icon: github
         href: https://github.com/trishula-dev
 
