@@ -1,0 +1,72 @@
+---
+title: "Building Trishula"
+---
+
+Trishula is built and verified with a small, reproducible toolchain: kernel-side eBPF sources compiled CO-RE on a Linux kernel inside a virtual machine, userspace Go services with a test-first engineering standard, and every claim traced to a merge-verified pull request. This page documents that loop — the same loop that produces the evidence records cited across the [roadmap](roadmap.html).
+
+## The build environment
+
+| Layer | Component | Role |
+|---|---|---|
+| Workstation | macOS (Apple silicon) | Editing, CI, site/publishing, artifact generation |
+| Test target | **Linux VM on the workstation** (Ubuntu 24.04, arm64) | The actual eBPF test kernel: verifier, BTF, TC/XDP attach, netns/veth harnesses |
+| Kernel toolchain | `clang -target bpf` + `bpftool` | CO-RE compile + `vmlinux.h` generation from the VM kernel's own BTF |
+| Object generation | [`bpf2go`](https://github.com/cilium/ebpf) | Generated Go bindings + per-target objects, committed — a tagged release ships byte-identical objects ([PRD §9.2](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md#92-hook-inventory)) |
+| Loader | [`cilium/ebpf`](https://github.com/cilium/ebpf) | Load/pin/attach from Go; no C loader on the host |
+
+The VM is the test kernel because **eBPF is kernel work**: XDP/TC programs, maps, BTF and the verifier exist only on Linux. The workstation orchestrates; the VM verifies. kind (Kubernetes-in-the-VM) extends the same pattern to the cluster-level labs ([TR-06](https://github.com/trishula-dev/trishula/issues/6)).
+
+## Verification standard
+
+Every build item follows a hypothesis-first test-driven loop (the [engineering standard](https://github.com/trishula-dev/trishula/issues/42), encoded in [CONTRIBUTING](https://github.com/trishula-dev/trishula/blob/main/CONTRIBUTING.md)):
+
+1. **Spec** — the PRD section is the design source; the issue cites its sections ([PRD index](https://github.com/trishula-dev/trishula/issues/56)).
+2. **RED** — the failing test is written first and committed watched-failing. A kernel-side contract is frozen by test *before* the C implementation lands: map names/types/sizes, wire layouts, action codes.
+3. **GREEN** — the minimal implementation makes the test pass; nothing more.
+4. **PR** — branch per change, GPG-signed commits, CI gates (build + vet + test, dependency review, pre-commit); every PR carries the hypothesis and the RED/GREEN evidence in the body.
+5. **Close on acceptance** — an issue closes only when its own acceptance line is verified against the tree (run the check, paste the evidence).
+
+This produces the property that matters: every roadmap artifact is **proved by a runnable check**, not asserted by prose.
+
+## The kernel-side loop in practice
+
+A real example — the shield PoC ([TR-03](https://github.com/trishula-dev/trishula/issues/65)) and the ring producer ([TR-04](https://github.com/trishula-dev/trishula/issues/4)) — shows the loop end to end:
+
+```text
+1. contract test (RED)        map names/types/sizes pinned from PRD §19.1
+2. wire-format test (RED)     ban_key/ban_val byte layouts frozen for C + Go
+3. C implementation (GREEN)   bpf/shield_xdp.c + bpf/flow_tc.c compiled
+                              -target bpf, verifier-passed
+4. loader (GREEN)             cilium/ebpf attach; XDP on the interface,
+                              TC clsact on veth pairs
+5. E2E (RED → GREEN)          netns + veth + synthetic flow: a banned
+                              source drops in-kernel; a real flow
+                              decodes with full header fields
+6. gate script                lab/verify-xdp-chain.sh — the environment
+                              gate every kernel-side PR pastes as evidence
+```
+
+Facts the loop surfaced (and the tests now pin): the ring event is 200 bytes (C natural alignment), TCP ports travel network-order, the L7 payload offset follows `tcp->doff`, and payload bytes can sit in paged fragments — linear-only reads never see them, so the peek uses `bpf_skb_load_bytes`. Each was caught by a test during the build and recorded in the PR trail.
+
+## Environment gates
+
+Two gates run before kernel-side work merges:
+
+- **`lab/verify-xdp-chain.sh`** — proves the test host end-to-end: BTF present, `vmlinux.h` dumped from the live kernel, a CO-RE probe compiled, verifier-loaded, pinned, attached as XDP, detached cleanly. Exit 0 is pasted into the PR.
+- **In-VM E2E tags** — kernel-attach tests run behind build tags (`ingest4d`, `attach`) and are root-gated: CI runs the portable suites; the VM runs the kernel suite.
+
+## Engineering records
+
+Work is tracked as issues ([TR-01 …](https://github.com/trishula-dev/trishula/issues)) on the [roadmap board](https://github.com/orgs/trishula-dev/projects/1); large items are sliced into sub-issues (~1 hour each) with native blocked-by edges, so dependency order is visible on the board. Kernel-quirk discoveries are filed as defects (e.g. [#80](https://github.com/trishula-dev/trishula/issues/80) — platform fast-path bypasses a TC hook) rather than absorbed silently. The [PRD index](https://github.com/trishula-dev/trishula/issues/56) maps every item to its design sections, and the [delivery-gate ledger](https://github.com/trishula-dev/trishula/issues/14#issuecomment-6074999638) tracks the verified capability at each stage.
+
+## Reproduce it locally
+
+```bash
+git clone https://github.com/trishula-dev/trishula && cd trishula
+go build ./... && go test ./...          # portable suites (any OS)
+# kernel suites need Linux (root):
+sudo go test -tags attach -run TestBanDropE2E ./internal/shield/ -v
+sudo go test -tags ingest4d -run TestFlowTCRingE2E ./internal/engine/ingest/ -v
+```
+
+Any Linux host with BTF (`/sys/kernel/btf/vmlinux`) and root works; the gate script above checks the details.

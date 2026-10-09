@@ -4,6 +4,7 @@ project:
   render:
     - "index.qmd"
     - "roadmap.qmd"
+    - "building.qmd"
     - "contributing.qmd"
     - "security.qmd"
     - "code-of-conduct.qmd"
@@ -24,17 +25,13 @@ website:
         text: Home
       - href: index.qmd#how-trishula-works
         text: Architecture
-      - href: index.qmd#why-this-project
-        text: Why
+      - href: index.qmd#objectives
+        text: Objectives
       - href: index.qmd#deployment-model
-        text: Kubernetes
-      - href: index.qmd#education-and-adoption
-        text: Education
-      - href: roadmap.qmd
-        text: Roadmap
-      - href: index.qmd#design-rationale
-        text: Reasoning
+        text: Deployment
     right:
+      - href: building.qmd
+        text: Building
       - href: roadmap.qmd
         text: Roadmap
       - href: index.qmd#paper
