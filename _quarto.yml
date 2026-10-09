@@ -29,9 +29,9 @@ website:
         text: Objectives
       - href: index.qmd#deployment-model
         text: Deployment
-    right:
       - href: building.qmd
         text: Building
+    right:
       - href: roadmap.qmd
         text: Roadmap
       - href: index.qmd#paper
