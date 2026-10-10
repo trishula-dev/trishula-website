@@ -5,6 +5,7 @@ project:
     - "index.qmd"
     - "roadmap.qmd"
     - "building.qmd"
+    - "agents.qmd"
     - "contributing.qmd"
     - "security.qmd"
     - "code-of-conduct.qmd"
@@ -34,6 +35,8 @@ website:
     right:
       - href: roadmap.qmd
         text: Roadmap
+      - href: agents.qmd
+        text: Agents
       - href: contributing.qmd
         text: Contributing
       - href: security.qmd
