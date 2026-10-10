@@ -20,6 +20,27 @@ the file's own table of contents at its usual anchors:
 - [`CONTRIBUTING.md`](https://github.com/trishula-dev/trishula/blob/main/CONTRIBUTING.md) —
   the working agreement (ground rules, PR template).
 
+## Architecture Decision Records
+
+Structural changes carry an ADR in the same PR. Most slices are
+leaf-sized — the issue's PRD reference IS the design record, no ADR
+needed — write one only when the change **introduces a new persistent
+artifact** or **removes or changes one**: a wire format, a kernel map
+layout, a CRD field, a gate script.
+
+The record home is
+[`docs/adr/`](https://github.com/trishula-dev/trishula/tree/main/docs/adr) —
+[the process](https://github.com/trishula-dev/trishula/blob/main/docs/adr/0000-architecture-decision-records.md)
+and [the record format](https://github.com/trishula-dev/trishula/blob/main/docs/adr/0001-record-format.md).
+
+Rules with teeth:
+
+- **Accepted ADRs are immutable.** A change that contradicts an accepted
+  ADR supersedes it with a new one; the accepted record is never rewritten.
+- **Never invent discussion, deciders or quotes.** Cite commit/issue
+  permalinks, or write "No substantive technical discussion recorded".
+- Bug fixes, docs, CI and dependency bumps don't need ADRs.
+
 This page intentionally does not mirror the file: a mirror drifts the moment
 the repo moves, and the source-of-truth rule (AGENTS.md wins) already says
 where to look.
