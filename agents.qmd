@@ -1,18 +1,25 @@
 ---
 title: "Coding agents"
-toc: true
+toc: false
 ---
 
 The single source of truth for humans and coding agents (Copilot, Claude,
-Cursor, Hermes, etc.) working on Trishula — [
-  `AGENTS.md`
-](https://github.com/trishula-dev/trishula/blob/main/AGENTS.md) in the
-[`trishula`](https://github.com/trishula-dev/trishula) repository.
+Cursor, Hermes, etc.) working on Trishula is
+[`AGENTS.md`](https://github.com/trishula-dev/trishula/blob/main/AGENTS.md)
+in the [`trishula`](https://github.com/trishula-dev/trishula) repository.
 Tool-specific files (`CLAUDE.md`, `.github/copilot-instructions.md`) point
 there; when anything disagrees, **AGENTS.md wins**.
 
-This page is a **verbatim render** of that file; the synced copy lives at
-[`includes/AGENTS.md`](https://github.com/trishula-dev/trishula-website/blob/main/includes/AGENTS.md)
-(resync = `curl -o includes/AGENTS.md https://raw.githubusercontent.com/trishula-dev/trishula/main/AGENTS.md`).
+Read it at the source — the GitHub-rendered page is always current, with
+the file's own table of contents at its usual anchors:
 
-{{< include includes/AGENTS.md >}}
+- [`AGENTS.md`](https://github.com/trishula-dev/trishula/blob/main/AGENTS.md) —
+  the guide: project map, testing standard, layer map, signing, the ADR
+  process ([`docs/adr/`](https://github.com/trishula-dev/trishula/tree/main/docs/adr)),
+  PR contract, labels, security rules.
+- [`CONTRIBUTING.md`](https://github.com/trishula-dev/trishula/blob/main/CONTRIBUTING.md) —
+  the working agreement (ground rules, PR template).
+
+This page intentionally does not mirror the file: a mirror drifts the moment
+the repo moves, and the source-of-truth rule (AGENTS.md wins) already says
+where to look.
