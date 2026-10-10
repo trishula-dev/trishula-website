@@ -4,58 +4,35 @@ title: "Roadmap"
 
 ## Project timeline
 
-How the project got here — from an empty repository to the first release, in
-plain language. Every step landed as a tested pull request; every claim was
-verified by running it, not by writing it down.
+Delivered scope from inception to the v0.1 release, with the tracking issue
+for each step. Every item below was completed as a tested pull request and
+verified by execution; the dates are the issue-close dates.
 
-**Early October — the paper stage**
+**3 October — baseline**
 
-- **The project is born** with a full product requirements document — the whole
-  design written down before any code: what the firewall does, how it is built,
-  and how every promise will be proven.
-- The governance scaffolding lands the same week: contribution guide, security
-  policy, code of conduct, CI pipelines, badges, and the project website.
+- The product specification ([PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md)) is written and reviewed before implementation; the repository, CI, governance documents and website follow ([#1](https://github.com/trishula-dev/trishula/issues/1), [#37](https://github.com/trishula-dev/trishula/issues/37)-[#56](https://github.com/trishula-dev/trishula/issues/56)).
 
-**8 October — the first building blocks work**
+**8 October — first capabilities**
 
-- **The design document ships to the public** as the project's specification.
-- **The rule engine boots** — the first command runs a security rule against a
-  test request and returns a verdict, exactly as the design promised.
-- **The kernel shield's first program compiles, loads and detaches cleanly** in
-  the Linux lab — the eBPF test environment is real.
+- The rule engine runs a security rule against a test request and returns a verdict — the core decision loop, verified by fixtures ([#2](https://github.com/trishula-dev/trishula/issues/2), [PR](https://github.com/trishula-dev/trishula/pull/59)).
+- The kernel packet filter compiles, loads under the verifier and detaches cleanly — the eBPF environment is proven ([#3](https://github.com/trishula-dev/trishula/issues/3), gate output in [lab](https://github.com/trishula-dev/trishula/blob/main/lab/README.md)).
 
-**9 October — data starts flowing**
+**9 October — packet path verified end to end**
 
-- **Test cases verified for the packet path** — the ring buffer feeding events
-  from the kernel to the engine passes its end-to-end check in the lab.
-- **The inspection ladder appears** — requests are scored stage by stage, with
-  verdicts recorded at every step.
-- **HTTP request parsing** lands: the engine now reads real web traffic into a
-  clean, rule-friendly view.
+- The kernel-to-engine event channel passes its end-to-end test in the lab: packets become structured events with correct field layout ([#4](https://github.com/trishula-dev/trishula/issues/4), [PR](https://github.com/trishula-dev/trishula/pull/81)).
+- Requests are now scored stage-by-stage (the inspection ladder), with verdicts recorded at each stage ([#5](https://github.com/trishula-dev/trishula/issues/5)).
+- HTTP request bodies are parsed into the structured view the rules operate on ([#5](https://github.com/trishula-dev/trishula/issues/5), [PR](https://github.com/trishula-dev/trishula/pull/88)).
 
-**10 October — v0.1, one big day**
+**10 October — v0.1**
 
-- **Dev lab demo done** — a Kubernetes lab boots on demand, the gateway routes
-  real traffic through the firewall, and each hop is proven with response
-  headers anyone can reproduce.
-- **Test cases verified against the real world** — the engine's verdicts match
-  the industry-standard rule set (ModSecurity's OWASP CRS) on every test case,
-  with the comparison enforced on every future change.
-- **Policy files now do something** — a policy written as Kubernetes YAML is
-  compiled and loaded, and the affected traffic is actually blocked; the full
-  round trip is timed well under the five-second budget.
-- **The ban engine enforces in the kernel** — repeat offenders get dropped at
-  wire speed, bans expire on their own, and every ban leaves a written record.
-- **Every verdict leaves three correlated records** — a trace, a counter and a
-  log line, tied together by request id.
-- **Bot detection's first cut** — a curl request and a browser request produce
-  clearly different fingerprints, verified against published test vectors.
-- **Positive security's first cut** — a route's API schema becomes an
-  allow-list: requests a schema can't describe get rejected, naming exactly
-  which field broke the contract.
-- **The honest exit** — the README now states what exists and what does not,
-  the exit checklist is run and referenced, and the whole thing ships as
-  **v0.1.0, a signed release** with the lab evidence attached.
+- The deployment lab is reproducible on demand: cluster, gateway, firewall and a demo application, with each network hop verified by response headers ([#6](https://github.com/trishula-dev/trishula/issues/6), [PR](https://github.com/trishula-dev/trishula/pull/96)).
+- The firewall's verdicts match the vendor-neutral reference rule set (OWASP CRS) on every corpus case — 19/19, one documented gap — and the comparison is enforced in CI on all future changes ([#7](https://github.com/trishula-dev/trishula/issues/7), [PR](https://github.com/trishula-dev/trishula/pull/103)).
+- A security policy written as a Kubernetes resource is compiled and loaded by the platform, and matching traffic is blocked; the apply-to-effect round trip is measured at 1.5–2.6 s against a 5 s budget ([#8](https://github.com/trishula-dev/trishula/issues/8), PRs [#98](https://github.com/trishula-dev/trishula/pull/98)/[#104](https://github.com/trishula-dev/trishula/pull/104)).
+- Repeat offenders are dropped in the kernel, bans expire automatically, and every ban produces an evidence record ([#10](https://github.com/trishula-dev/trishula/issues/10), [PR](https://github.com/trishula-dev/trishula/pull/105)).
+- Every verdict emits three correlated records — trace, metric, log — tied by request id ([#11](https://github.com/trishula-dev/trishula/issues/11), [PR](https://github.com/trishula-dev/trishula/pull/101)).
+- Automated clients are distinguishable from browsers from traffic fingerprints, validated against published test vectors ([#12](https://github.com/trishula-dev/trishula/issues/12), [PR](https://github.com/trishula-dev/trishula/pull/99)).
+- A route's published API schema acts as an allow-list: non-conforming requests are rejected with a diagnostic naming the violated field ([#13](https://github.com/trishula-dev/trishula/issues/13), [PR](https://github.com/trishula-dev/trishula/pull/102)).
+- The platform's limits are stated rather than implied: the README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)); the release is signed and published ([v0.1.0](https://github.com/trishula-dev/trishula/releases/tag/v0.1.0)).
 
 ## Roadmap
 
