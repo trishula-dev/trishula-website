@@ -9,7 +9,7 @@ Read the [Testing](#testing), [Kernel evidence](#kernel-evidence-and-the-lab),
 [Pull requests](#pull-requests) and [Security](#security) sections before
 changing anything. The rest is a map of the codebase.
 
-Read the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md) before any non-trivial change. The PRD is the design
+Read the [PRD](docs/PRD.md) before any non-trivial change. The PRD is the design
 source: every issue cites its sections, and every claim it makes is proven in
 the lab, not asserted.
 
@@ -27,16 +27,16 @@ altitudes" pipeline).
 
 The delivery unit is an **hour-scale slice** with a watchable RED→GREEN
 commit pair ("leaf PR"): [TR-01 … TR-41](https://github.com/orgs/trishula-dev/projects/1)
-map the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md)'s design sections to runnable artefacts — every claim
-is proven in the [DX1 lab](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/README.md), not asserted.
+map the [PRD](docs/PRD.md)'s design sections to runnable artefacts — every claim
+is proven in the [DX1 lab](lab/dx1/README.md), not asserted.
 
 Other documents worth knowing:
 
-- [`README.md`](https://github.com/trishula-dev/trishula/blob/main/README.md): status, badge rows, layout, the §20.2 exit checklist.
-- [`CONTRIBUTING.md`](https://github.com/trishula-dev/trishula/blob/main/CONTRIBUTING.md): the working agreement (ground rules, PR template).
-- [`SECURITY.md`](https://github.com/trishula-dev/trishula/blob/main/SECURITY.md): vulnerability reporting policy. See [Security](#security).
-- [`docs/PRD.md`](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md): the design (v4) — **the** design source for every issue.
-- [`docs/academy/`](https://github.com/trishula-dev/trishula/blob/main/docs/academy/): teach-the-web curriculum artifacts.
+- [`README.md`](README.md): status, badge rows, layout, the §20.2 exit checklist.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): the working agreement (ground rules, PR template).
+- [`SECURITY.md`](SECURITY.md): vulnerability reporting policy. See [Security](#security).
+- [`docs/PRD.md`](docs/PRD.md): the design (v4) — **the** design source for every issue.
+- [`docs/academy/`](docs/academy/): teach-the-web curriculum artifacts.
 - [`docs/paper.md`](docs/paper.md): research paper source.
 
 ## Repository structure
@@ -110,7 +110,7 @@ extend the pack; a rule's `id` doubles as the rule-pack digest input.
 
 ## Kernel evidence and the lab
 
-The lab is where the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md)'s claims are proven. **Every kernel
+The lab is where the [PRD](docs/PRD.md)'s claims are proven. **Every kernel
 claim needs an in-VM run** (`trishula-build-dev`: `orb run -m trishula-build-dev
 bash -cl '...'`), never a mac-only assertion.
 
@@ -122,6 +122,7 @@ bash -cl '...'`), never a mac-only assertion.
 | Parity | `go test ./test/crs-differential/` | CRS reference verdict parity (CI-blocking) |
 | Ban enforcement | `go test -tags ban_e2e ./test/banenforce/` | kernel shot + expiry + reconciler + evidence JSONL |
 | Attack demo | `lab/demo-attack.sh` (sudo, Linux) | full attack replay: CRS + BOLA + kernel drop |
+| Exit-gate demo | `lab/demo.sh` | one command: DX1 setup + M9 apply→effect + hop evidence |
 
 **Rule: no invented transcripts.** Any README/PR/issue claim about kernel
 behaviour cites a real run: its output verbatim, plus the issue/PR where it
@@ -196,35 +197,37 @@ logged — **never** a crash.
 ## Signing
 
 **Everything is GPG-signed, always.** Commits AND tags
-(`git config commit.gpgsign true`; signing key `AAF8226F3F4C1712` —
-authored and committed as `Shain.Singh@owasp.org`). PR CI enforces
+(`git config commit.gpgsign true`). PR CI enforces
 `required_signatures`; an unsigned or badly-attributed commit blocks the PR.
-Never use the f5-attributed key for trishula work — the signing key and the
-commit email must agree with the GitHub-verified identity or verification
-fails with `bad_email` and the PR cannot merge. Release tags are signed tags;
-`git tag -v` is part of the release checklist.
+The signing key and the commit email must agree with a GitHub-verified
+identity or verification fails with `bad_email` and the PR cannot merge.
+Release tags are signed tags; `git tag -v` is part of the release checklist.
 
 ## Architecture Decision Records
 
-Structural changes (a new subsystem, a public API change, a performance-characteristic
-change) carry an ADR in the same PR, following the
-[Coraza ADR standard](https://github.com/corazawaf/coraza/blob/main/docs/adr/README.md)
-format (template: `docs/adr/0000-template.md`, next number, short slug). For this
-repo the bar is smaller than Coraza's: most slices are leaf-sized, so the
-issue's PRD reference IS the design record — write an ADR only when
-**the change introduces a new persistent artifact** (a wire format, a map schema,
-a CRD field, a gate script) or **removes/changes one**.
+Structural changes (a new subsystem, a public API change, a
+performance-characteristic change) carry an ADR in the same PR. Most
+slices are leaf-sized — the issue's PRD reference IS the design record,
+no ADR needed — write one only when **the change introduces a new
+persistent artifact** (a wire format, a kernel map layout, a CRD field,
+a gate script) or **removes/changes one**.
 
-Agent rules (borrowed from Coraza, same teeth):
+The record lives in [`docs/adr/`](docs/adr/):
+[`0000-architecture-decision-records.md`](docs/adr/0000-architecture-decision-records.md)
+explains the process and
+[`0001-record-format.md`](docs/adr/0001-record-format.md) fixes the
+format (NNNN-short-slug.md, numbered sequentially, one decision per
+file). Rules with teeth:
 
-- **Never invent discussion, deciders or quotes.** Cite commit/issue permalinks
-  or write "No substantive technical discussion recorded".
-- **Never rewrite an accepted ADR** to match a new change — supersede it.
+- **Accepted ADRs are immutable.** A change that contradicts an accepted
+  ADR supersedes it with a new one; never rewrite the accepted record.
+- **Never invent discussion, deciders or quotes.** Cite commit/issue
+  permalinks, or write "No substantive technical discussion recorded".
 - Bug fixes, docs, CI and dependency bumps don't need ADRs.
 
 ## Pull requests
 
-Follow [`CONTRIBUTING.md`](https://github.com/trishula-dev/trishula/blob/main/CONTRIBUTING.md) and treat the PR template checklist
+Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) and treat the PR template checklist
 as a contract, not decoration.
 
 ### Before opening
@@ -233,7 +236,7 @@ as a contract, not decoration.
   stacked branch. (TR-05's lesson: the base must be main or the squash misses it.)
 - **One logical change per PR.** No drive-by refactors, formatting or dependency bumps.
 - TDD: watched RED committed before GREEN (see [Testing](#testing)).
-- All commits GPG-signed by `Shain.Singh@owasp.org` (see [Signing](#signing)).
+- All commits GPG-signed with a GitHub-verified identity (see [Signing](#signing)).
 - Full gates: `go vet ./... && go build ./... && go test ./... -count=1`
   locally, matching what `go-build.yml` runs.
 - Kernel-side work: the in-VM evidence in the PR body.
@@ -277,7 +280,7 @@ never invent new `area:*`/`type:*` names (the label catalog is the vocabulary).
 **Never open a public issue or PR describing an exploitable bug.** Report
 through the GitHub security advisory link
 (<https://github.com/trishula-dev/trishula/security/advisories/new>); see
-[`SECURITY.md`](https://github.com/trishula-dev/trishula/blob/main/SECURITY.md). The Coraza rule set for coding agents applies
+[`SECURITY.md`](SECURITY.md). The embedded-CRS reporting rules apply
 verbatim: a valid report carries a working reproducer; CVSS preconditions get
 verified, not copied; AI involvement is disclosed in the advisory itself.
 
