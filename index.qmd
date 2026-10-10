@@ -145,7 +145,7 @@ Contributions follow the [contributing guide](contributing.html): pick an issue 
 
 ## Project documents
 
-The [security policy](security.html) covers reporting a vulnerability, supported versions and disclosure expectations. The [contributing guide](contributing.html) covers branching, commit conventions, signing and CI gates. The [code of conduct](code-of-conduct.html) governs participation in all project spaces. The full product specification is the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md) (public edition, `docs/PRD.md` in the main repo; rendered PDF is a release asset).
+The [security policy](security.html) covers reporting a vulnerability, supported versions and disclosure expectations. The [contributing guide](contributing.html) covers branching, commit conventions, signing and CI gates. The [code of conduct](code-of-conduct.html) governs participation in all project spaces. The [coding-agents guide](agents.html) (AGENTS.md, rendered) is the single source of truth for humans and coding agents working on the repo. The full product specification is the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md) (public edition, `docs/PRD.md` in the main repo; rendered PDF is a release asset).
 
 ## Paper
 
