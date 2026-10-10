@@ -3,11 +3,16 @@ title: "Coding agents"
 toc: true
 ---
 
-This page renders the single source of truth for humans and coding agents
-(Copilot, Claude, Cursor, Hermes, etc.) working on Trishula — the
-[`AGENTS.md`](https://github.com/trishula-dev/trishula/blob/main/AGENTS.md)
-in the [`trishula`](https://github.com/trishula-dev/trishula) repository.
+The single source of truth for humans and coding agents (Copilot, Claude,
+Cursor, Hermes, etc.) working on Trishula — [
+  `AGENTS.md`
+](https://github.com/trishula-dev/trishula/blob/main/AGENTS.md) in the
+[`trishula`](https://github.com/trishula-dev/trishula) repository.
 Tool-specific files (`CLAUDE.md`, `.github/copilot-instructions.md`) point
 there; when anything disagrees, **AGENTS.md wins**.
 
-{{< include https://raw.githubusercontent.com/trishula-dev/trishula/agents-docs/AGENTS.md >}}
+This page is a **verbatim render** of that file; the synced copy lives at
+[`includes/AGENTS.md`](https://github.com/trishula-dev/trishula-website/blob/main/includes/AGENTS.md)
+(resync = `curl -o includes/AGENTS.md https://raw.githubusercontent.com/trishula-dev/trishula/main/AGENTS.md`).
+
+{{< include includes/AGENTS.md >}}
