@@ -2,6 +2,40 @@
 title: "Roadmap"
 ---
 
+## Project timeline
+
+Delivered scope from inception to the v0.1 release, with the tracking issue
+for each step. Every item below was completed as a tested pull request and
+verified by execution; the dates are the issue-close dates.
+
+**3 October — baseline**
+
+- The product specification ([PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md)) is written and reviewed before implementation; the repository, CI, governance documents and website follow ([#1](https://github.com/trishula-dev/trishula/issues/1), [#37](https://github.com/trishula-dev/trishula/issues/37)-[#56](https://github.com/trishula-dev/trishula/issues/56)).
+
+**8 October — first capabilities**
+
+- The rule engine runs a security rule against a test request and returns a verdict — the core decision loop, verified by fixtures ([#2](https://github.com/trishula-dev/trishula/issues/2), [PR](https://github.com/trishula-dev/trishula/pull/59)).
+- The kernel packet filter compiles, loads under the verifier and detaches cleanly — the eBPF environment is proven ([#3](https://github.com/trishula-dev/trishula/issues/3), gate output in [lab](https://github.com/trishula-dev/trishula/blob/main/lab/README.md)).
+
+**9 October — packet path verified end to end**
+
+- The kernel-to-engine event channel passes its end-to-end test in the lab: packets become structured events with correct field layout ([#4](https://github.com/trishula-dev/trishula/issues/4), [PR](https://github.com/trishula-dev/trishula/pull/81)).
+- Requests are now scored stage-by-stage (the inspection ladder), with verdicts recorded at each stage ([#5](https://github.com/trishula-dev/trishula/issues/5)).
+- HTTP request bodies are parsed into the structured view the rules operate on ([#5](https://github.com/trishula-dev/trishula/issues/5), [PR](https://github.com/trishula-dev/trishula/pull/88)).
+
+**10 October — v0.1**
+
+- The deployment lab is reproducible on demand: cluster, gateway, firewall and a demo application, with each network hop verified by response headers ([#6](https://github.com/trishula-dev/trishula/issues/6), [PR](https://github.com/trishula-dev/trishula/pull/96)).
+- The firewall's verdicts match the vendor-neutral reference rule set (OWASP CRS) on every corpus case — 19/19, one documented gap — and the comparison is enforced in CI on all future changes ([#7](https://github.com/trishula-dev/trishula/issues/7), [PR](https://github.com/trishula-dev/trishula/pull/103)).
+- A security policy written as a Kubernetes resource is compiled and loaded by the platform, and matching traffic is blocked; the apply-to-effect round trip is measured at 1.5–2.6 s against a 5 s budget ([#8](https://github.com/trishula-dev/trishula/issues/8), PRs [#98](https://github.com/trishula-dev/trishula/pull/98)/[#104](https://github.com/trishula-dev/trishula/pull/104)).
+- Repeat offenders are dropped in the kernel, bans expire automatically, and every ban produces an evidence record ([#10](https://github.com/trishula-dev/trishula/issues/10), [PR](https://github.com/trishula-dev/trishula/pull/105)).
+- Every verdict emits three correlated records — trace, metric, log — tied by request id ([#11](https://github.com/trishula-dev/trishula/issues/11), [PR](https://github.com/trishula-dev/trishula/pull/101)).
+- Automated clients are distinguishable from browsers from traffic fingerprints, validated against published test vectors ([#12](https://github.com/trishula-dev/trishula/issues/12), [PR](https://github.com/trishula-dev/trishula/pull/99)).
+- A route's published API schema acts as an allow-list: non-conforming requests are rejected with a diagnostic naming the violated field ([#13](https://github.com/trishula-dev/trishula/issues/13), [PR](https://github.com/trishula-dev/trishula/pull/102)).
+- The platform's limits are stated rather than implied: the README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)); the release is signed and published ([v0.1.0](https://github.com/trishula-dev/trishula/releases/tag/v0.1.0)).
+
+## Roadmap
+
 Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) (org Project) as issues [TR-01 … TR-41](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion — prove the ladder end-to-end, not slide-by-slide.
 
 | Milestone | Items | Status |
