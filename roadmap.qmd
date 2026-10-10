@@ -2,6 +2,63 @@
 title: "Roadmap"
 ---
 
+## Project timeline
+
+How the project got here — from an empty repository to the first release, in
+plain language. Every step landed as a tested pull request; every claim was
+verified by running it, not by writing it down.
+
+**Early October — the paper stage**
+
+- **The project is born** with a full product requirements document — the whole
+  design written down before any code: what the firewall does, how it is built,
+  and how every promise will be proven.
+- The governance scaffolding lands the same week: contribution guide, security
+  policy, code of conduct, CI pipelines, badges, and the project website.
+
+**8 October — the first building blocks work**
+
+- **The design document ships to the public** as the project's specification.
+- **The rule engine boots** — the first command runs a security rule against a
+  test request and returns a verdict, exactly as the design promised.
+- **The kernel shield's first program compiles, loads and detaches cleanly** in
+  the Linux lab — the eBPF test environment is real.
+
+**9 October — data starts flowing**
+
+- **Test cases verified for the packet path** — the ring buffer feeding events
+  from the kernel to the engine passes its end-to-end check in the lab.
+- **The inspection ladder appears** — requests are scored stage by stage, with
+  verdicts recorded at every step.
+- **HTTP request parsing** lands: the engine now reads real web traffic into a
+  clean, rule-friendly view.
+
+**10 October — v0.1, one big day**
+
+- **Dev lab demo done** — a Kubernetes lab boots on demand, the gateway routes
+  real traffic through the firewall, and each hop is proven with response
+  headers anyone can reproduce.
+- **Test cases verified against the real world** — the engine's verdicts match
+  the industry-standard rule set (ModSecurity's OWASP CRS) on every test case,
+  with the comparison enforced on every future change.
+- **Policy files now do something** — a policy written as Kubernetes YAML is
+  compiled and loaded, and the affected traffic is actually blocked; the full
+  round trip is timed well under the five-second budget.
+- **The ban engine enforces in the kernel** — repeat offenders get dropped at
+  wire speed, bans expire on their own, and every ban leaves a written record.
+- **Every verdict leaves three correlated records** — a trace, a counter and a
+  log line, tied together by request id.
+- **Bot detection's first cut** — a curl request and a browser request produce
+  clearly different fingerprints, verified against published test vectors.
+- **Positive security's first cut** — a route's API schema becomes an
+  allow-list: requests a schema can't describe get rejected, naming exactly
+  which field broke the contract.
+- **The honest exit** — the README now states what exists and what does not,
+  the exit checklist is run and referenced, and the whole thing ships as
+  **v0.1.0, a signed release** with the lab evidence attached.
+
+## Roadmap
+
 Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) (org Project) as issues [TR-01 … TR-41](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion — prove the ladder end-to-end, not slide-by-slide.
 
 | Milestone | Items | Status |
