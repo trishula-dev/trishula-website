@@ -59,6 +59,35 @@ Two gates run before kernel-side work merges:
 
 Work is tracked as issues ([TR-01 …](https://github.com/trishula-dev/trishula/issues)) on the [roadmap board](https://github.com/orgs/trishula-dev/projects/1); large items are sliced into sub-issues (~1 hour each) with native blocked-by edges, so dependency order is visible on the board. Kernel-quirk discoveries are filed as defects (e.g. [#80](https://github.com/trishula-dev/trishula/issues/80) — platform fast-path bypasses a TC hook) rather than absorbed silently. The [PRD index](https://github.com/trishula-dev/trishula/issues/56) maps every item to its design sections, and the [delivery-gate ledger](https://github.com/trishula-dev/trishula/issues/14#issuecomment-6074999638) tracks the verified capability at each stage.
 
+## The DX1 lab quickstart — one command from clone to the full demo
+
+Since [TR-14](https://github.com/trishula-dev/trishula/pull/108) the whole exit-gate demo is one command on a Docker-provider host (kind, or OrbStack-provided Kubernetes) with `go`, `kubectl`, `helm`, `docker`, `curl`:
+
+```bash
+git clone https://github.com/trishula-dev/trishula && cd trishula
+bash lab/demo.sh   # ~3 stages, each pass/fail loudly; ends on the hop evidence
+```
+
+The stages it composes (each script also runs standalone):
+
+```bash
+bash lab/dx1/setup.sh         # stage 1 — cluster + NGF + engine + echo (idempotent)
+bash lab/dx1/apply-effect.sh  # stage 2 — WAFPolicy apply → operator compile →
+                              #           engine hot-reload → 403 on traffic, timed (M9 ≤ 5 s)
+bash lab/dx1/verify.sh        # stage 3 — hop evidence (NGF → engine → echo), printed LAST
+```
+
+Verify the composition yourself — the demo's stage markers, from the recorded run:
+
+```text
+| stage 1 PASS — cluster + NGF + engine + echo up (lab left installed)
+| stage 2 PASS — CRD apply → operator compile → engine hot-reload → 403, within budget
+| stage 3 PASS — NGF → engine → echo pod hop-by-hop evidenced
+== DEMO-OK — lab/demo.sh complete: setup + M9 apply→effect + hop evidence all PASS (lab left running, no teardown)
+```
+
+The stage-3 hop transcript (`X-Trishula-Hop: engine`, echo pod body, engine-local `/healthz`) is the demo's closing evidence — recorded verbatim in the repo [README "Proof" section](https://github.com/trishula-dev/trishula#readme) and on [#6](https://github.com/trishula-dev/trishula/issues/6#issuecomment-6091479891).
+
 ## Reproduce it locally
 
 ```bash
