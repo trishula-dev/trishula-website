@@ -9,7 +9,7 @@ Read the [Testing](#testing), [Kernel evidence](#kernel-evidence-and-the-lab),
 [Pull requests](#pull-requests) and [Security](#security) sections before
 changing anything. The rest is a map of the codebase.
 
-Read the [PRD](docs/PRD.md) before any non-trivial change. The PRD is the design
+Read the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md) before any non-trivial change. The PRD is the design
 source: every issue cites its sections, and every claim it makes is proven in
 the lab, not asserted.
 
@@ -27,16 +27,16 @@ altitudes" pipeline).
 
 The delivery unit is an **hour-scale slice** with a watchable RED→GREEN
 commit pair ("leaf PR"): [TR-01 … TR-41](https://github.com/orgs/trishula-dev/projects/1)
-map the [PRD](docs/PRD.md)'s design sections to runnable artefacts — every claim
-is proven in the [DX1 lab](lab/dx1/README.md), not asserted.
+map the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md)'s design sections to runnable artefacts — every claim
+is proven in the [DX1 lab](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/README.md), not asserted.
 
 Other documents worth knowing:
 
-- [`README.md`](README.md): status, badge rows, layout, the §20.2 exit checklist.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md): the working agreement (ground rules, PR template).
-- [`SECURITY.md`](SECURITY.md): vulnerability reporting policy. See [Security](#security).
-- [`docs/PRD.md`](docs/PRD.md): the design (v4) — **the** design source for every issue.
-- [`docs/academy/`](docs/academy/): teach-the-web curriculum artifacts.
+- [`README.md`](https://github.com/trishula-dev/trishula/blob/main/README.md): status, badge rows, layout, the §20.2 exit checklist.
+- [`CONTRIBUTING.md`](https://github.com/trishula-dev/trishula/blob/main/CONTRIBUTING.md): the working agreement (ground rules, PR template).
+- [`SECURITY.md`](https://github.com/trishula-dev/trishula/blob/main/SECURITY.md): vulnerability reporting policy. See [Security](#security).
+- [`docs/PRD.md`](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md): the design (v4) — **the** design source for every issue.
+- [`docs/academy/`](https://github.com/trishula-dev/trishula/blob/main/docs/academy/): teach-the-web curriculum artifacts.
 - [`docs/paper.md`](docs/paper.md): research paper source.
 
 ## Repository structure
@@ -110,7 +110,7 @@ extend the pack; a rule's `id` doubles as the rule-pack digest input.
 
 ## Kernel evidence and the lab
 
-The lab is where the [PRD](docs/PRD.md)'s claims are proven. **Every kernel
+The lab is where the [PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md)'s claims are proven. **Every kernel
 claim needs an in-VM run** (`trishula-build-dev`: `orb run -m trishula-build-dev
 bash -cl '...'`), never a mac-only assertion.
 
@@ -224,7 +224,7 @@ Agent rules (borrowed from Coraza, same teeth):
 
 ## Pull requests
 
-Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) and treat the PR template checklist
+Follow [`CONTRIBUTING.md`](https://github.com/trishula-dev/trishula/blob/main/CONTRIBUTING.md) and treat the PR template checklist
 as a contract, not decoration.
 
 ### Before opening
@@ -277,7 +277,7 @@ never invent new `area:*`/`type:*` names (the label catalog is the vocabulary).
 **Never open a public issue or PR describing an exploitable bug.** Report
 through the GitHub security advisory link
 (<https://github.com/trishula-dev/trishula/security/advisories/new>); see
-[`SECURITY.md`](SECURITY.md). The Coraza rule set for coding agents applies
+[`SECURITY.md`](https://github.com/trishula-dev/trishula/blob/main/SECURITY.md). The Coraza rule set for coding agents applies
 verbatim: a valid report carries a working reproducer; CVSS preconditions get
 verified, not copied; AI involvement is disclosed in the advisory itself.
 

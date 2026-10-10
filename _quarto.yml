@@ -35,14 +35,14 @@ website:
     right:
       - href: roadmap.qmd
         text: Roadmap
-      - href: agents.qmd
-        text: Agents
       - href: contributing.qmd
         text: Contributing
       - href: security.qmd
         text: Security
       - href: index.qmd#paper
         text: Paper
+      - href: agents.qmd
+        text: Agents
       - icon: github
         href: https://github.com/trishula-dev
 
