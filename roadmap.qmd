@@ -4,13 +4,11 @@ title: "Roadmap"
 
 ## Project timeline
 
-Delivered scope from inception to the v0.1 release, with the tracking issue
-for each step. Every item below was completed as a tested pull request and
-verified by execution; the dates are the issue-close dates.
+Delivered scope spans inception to the v0.1 release. Each step carries its tracking issue. Every item below closed as a tested pull request and verified by execution; the dates are the issue-close dates.
 
 **3 October — baseline**
 
-- The product specification ([PRD](https://github.com/trishula-dev/trishula/blob/main/docs/PRD.md)) is written and reviewed before implementation; the repository, CI, governance documents and website follow ([#1](https://github.com/trishula-dev/trishula/issues/1), [#37](https://github.com/trishula-dev/trishula/issues/37)-[#56](https://github.com/trishula-dev/trishula/issues/56)).
+- The product specification was written and reviewed before implementation. The repository, CI, governance documents and website followed ([#1](https://github.com/trishula-dev/trishula/issues/1), [#37](https://github.com/trishula-dev/trishula/issues/37)-[#56](https://github.com/trishula-dev/trishula/issues/56)).
 
 **8 October — first capabilities**
 
@@ -19,29 +17,29 @@ verified by execution; the dates are the issue-close dates.
 
 **9 October — packet path verified end to end**
 
-- The kernel-to-engine event channel passes its end-to-end test in the lab: packets become structured events with correct field layout ([#4](https://github.com/trishula-dev/trishula/issues/4), [PR](https://github.com/trishula-dev/trishula/pull/81)).
-- Requests are now scored stage-by-stage (the inspection ladder), with verdicts recorded at each stage ([#5](https://github.com/trishula-dev/trishula/issues/5)).
-- HTTP request bodies are parsed into the structured view the rules operate on ([#5](https://github.com/trishula-dev/trishula/issues/5), [PR](https://github.com/trishula-dev/trishula/pull/88)).
+- The kernel-to-engine event channel passes its end-to-end test in the lab: packets become structured events with the correct field layout ([#4](https://github.com/trishula-dev/trishula/issues/4), [PR](https://github.com/trishula-dev/trishula/pull/81)).
+- Requests score stage-by-stage (the inspection ladder), with verdicts recorded at each stage ([#5](https://github.com/trishula-dev/trishula/issues/5)).
+- HTTP request bodies parse into the structured view the rules operate on ([#5](https://github.com/trishula-dev/trishula/issues/5), [PR](https://github.com/trishula-dev/trishula/pull/88)).
 
 **10 October — v0.1**
 
-- The deployment lab is reproducible on demand: cluster, gateway, firewall and a demo application, with each network hop verified by response headers ([#6](https://github.com/trishula-dev/trishula/issues/6), [PR](https://github.com/trishula-dev/trishula/pull/96)).
-- The firewall's verdicts match the vendor-neutral reference rule set (OWASP CRS) on every corpus case — 19/19, one documented gap — and the comparison is enforced in CI on all future changes ([#7](https://github.com/trishula-dev/trishula/issues/7), [PR](https://github.com/trishula-dev/trishula/pull/103)).
-- A security policy written as a Kubernetes resource is compiled and loaded by the platform, and matching traffic is blocked; the apply-to-effect round trip is measured at 1.5–2.6 s against a 5 s budget ([#8](https://github.com/trishula-dev/trishula/issues/8), PRs [#98](https://github.com/trishula-dev/trishula/pull/98)/[#104](https://github.com/trishula-dev/trishula/pull/104)).
+- The deployment lab reproduces on demand: cluster, gateway, firewall and a demo application. Each network hop verifies by response headers ([#6](https://github.com/trishula-dev/trishula/issues/6), [PR](https://github.com/trishula-dev/trishula/pull/96)).
+- The firewall's verdicts match the vendor-neutral reference rule set (OWASP CRS) on every corpus case — 19/19, with one documented gap. The CI enforces the comparison on all future changes ([#7](https://github.com/trishula-dev/trishula/issues/7), [PR](https://github.com/trishula-dev/trishula/pull/103)).
+- A security policy written as a Kubernetes resource is compiled and loaded by the platform. Matching traffic is blocked. The apply-to-effect round trip measures 1.5–2.6 s within the 5 s budget ([#8](https://github.com/trishula-dev/trishula/issues/8), PRs [#98](https://github.com/trishula-dev/trishula/pull/98)/[#104](https://github.com/trishula-dev/trishula/pull/104)).
 - Repeat offenders are dropped in the kernel, bans expire automatically, and every ban produces an evidence record ([#10](https://github.com/trishula-dev/trishula/issues/10), [PR](https://github.com/trishula-dev/trishula/pull/105)).
 - Every verdict emits three correlated records — trace, metric, log — tied by request id ([#11](https://github.com/trishula-dev/trishula/issues/11), [PR](https://github.com/trishula-dev/trishula/pull/101)).
-- Automated clients are distinguishable from browsers from traffic fingerprints, validated against published test vectors ([#12](https://github.com/trishula-dev/trishula/issues/12), [PR](https://github.com/trishula-dev/trishula/pull/99)).
+- Automated clients are distinguishable from browsers by traffic fingerprints, validated against published test vectors ([#12](https://github.com/trishula-dev/trishula/issues/12), [PR](https://github.com/trishula-dev/trishula/pull/99)).
 - A route's published API schema acts as an allow-list: non-conforming requests are rejected with a diagnostic naming the violated field ([#13](https://github.com/trishula-dev/trishula/issues/13), [PR](https://github.com/trishula-dev/trishula/pull/102)).
-- The platform's limits are stated rather than implied: the README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)); the release is signed and published ([v0.1.0](https://github.com/trishula-dev/trishula/releases/tag/v0.1.0)).
+- The platform's limits are stated, not implied: the README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)). The release is signed and published ([v0.1.0](https://github.com/trishula-dev/trishula/releases/tag/v0.1.0)).
 
 ## Roadmap
 
-Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) (org Project) as issues [TR-01 … TR-41](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion — prove the ladder end-to-end, not slide-by-slide.
+Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) (org Project) as issues [TR-01 … TR-41](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion. The ladder reads proven end-to-end, not slide-by-slide.
 
 | Milestone | Items | Status |
 |---|---|---|
 | **v0.1 — DELIVERED** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit | **Phase 0 exit gate run** ([TR-14 PR](https://github.com/trishula-dev/trishula/pull/108)): shield loaders ([ed9b271](https://github.com/trishula-dev/trishula/commit/ed9b2714512ecad1bb6b0960eeeb7951e9693726)) · engine proxy + NGF lab ([75d8174](https://github.com/trishula-dev/trishula/commit/75d8174a921539184d8a7c12207d0a3d52005b09), [8bc24a2](https://github.com/trishula-dev/trishula/commit/8bc24a27d6b4e0ca839e22453f9c519a13e3000c)) · ladder ([b86cf6f](https://github.com/trishula-dev/trishula/commit/b86cf6f9a5bbff2903fe058980fed39e9f472ab6)) · CRS parity 19/19 ([ec19346](https://github.com/trishula-dev/trishula/commit/ec1934616317d966a42156c47cb394593779bf90)) · CRD round-trip 0.239 s ([e221c9f](https://github.com/trishula-dev/trishula/commit/e221c9f7938b84892d2ba66aecd87f850ef967eb)) · M9 apply→effect 2618 ms ([cb60e2b](https://github.com/trishula-dev/trishula/commit/cb60e2b0cd3463f84e72acf3d07356cacda66f2a)) · ban enforce E2E ([fdd32af](https://github.com/trishula-dev/trishula/commit/fdd32af7bc1f8b614fb3c82ea9b5806f61cb85ad)) · OTel triad ([e63d990](https://github.com/trishula-dev/trishula/commit/e63d990e4deef8e3ce9e0ed108987b80585dd47e)) · bots v0 ([c4f5e7e](https://github.com/trishula-dev/trishula/commit/c4f5e7e8bb766ee482aaae59ece5ffacc89020d1)) · positive v0 ([8f4c2f2](https://github.com/trishula-dev/trishula/commit/8f4c2f22d39ef52fe5633dafa6949cb47521bb14)) — per-criterion verdicts + evidence links in the [README exit checklist](https://github.com/trishula-dev/trishula#readme); the `<10 ms inline` criterion is **pending [TR-24](https://github.com/trishula-dev/trishula/issues/24)**, reported honestly |
-| **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane | next |
+| **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_process, DX gate, bench, multi-tenancy, Envoy lane | next |
 | **v0.3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch | later |
 | **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): socket-plane L7 fast path study (Beeline), WAFPolicy→eBPF compiler spike, kernel-altitude TLS posture (kTLS vs no-key signals) | parked |
 ## Sprint sequencing
@@ -50,4 +48,4 @@ The v0.1 sprint sequence: shield PoC → ingest → ladder slice → NGF steerin
 
 ## Contributing
 
-Contributions follow the [contributing guide](contributing.html): pick an issue labeled `complexity:starter` or any `area:*` that suits you; the referenced PRD section in the issue body is the design source. Branch + PR against `trishula-dev/trishula` (MIT).
+Contributions follow the [contributing guide](contributing.html). Pick an issue labelled `complexity:starter`, or any `area:*` that fits. The issue body carries the design source. Branch + PR against `trishula-dev/trishula` (MIT).
