@@ -3,14 +3,15 @@
 ## Reporting a vulnerability
 
 Report security bugs and vulnerabilities to
-**[shain.singh@owasp.org](mailto:shain.singh@owasp.org)** — or use GitHub's private
-vulnerability reporting: [Report a vulnerability](https://github.com/trishula-dev/trishula/security/advisories/new).
-Do not open a public issue for an unreported vulnerability.
+**[shain.singh@owasp.org](mailto:shain.singh@owasp.org)** — or use GitHub's
+private vulnerability reporting: [Report a vulnerability](https://github.com/trishula-dev/trishula/security/advisories/new).
+Never open a public issue for an unreported vulnerability.
 
-Email reports may be encrypted to the OpenPGP key below. Include a description of
-the issue, steps to reproduce, and the affected version or commit. Reports are
-triaged within a few days; accepted issues receive a fix and a release. Honour
-responsible disclosure until an advisory is published.
+Email reports may run encrypted to the OpenPGP key below. Include a
+description of the issue, the steps to reproduce, and the affected version or
+commit. The project triages reports within a few days. An accepted issue
+receives a fix and a release. Practise responsible disclosure until an
+advisory is published.
 
 <details>
 <summary>OpenPGP public key — fingerprint 9CB1781DC2BB28D37A0155DCAAF8226F3F4C1712 (RSA 4096, no expiry)</summary>
@@ -178,30 +179,30 @@ kis=
 
 ## Supported scope
 
-The project is pre-alpha: nothing deployed from the board should yet be treated
-as production security. Reports against the design documents, the eBPF shield,
-the detection ladder and the operator are all in scope — a design-level flaw
-found before implementation is the cheapest flaw to fix.
+The project is pre-alpha. Nothing deployed from the board carries
+production-security status. Reports against the design documents, the eBPF
+shield, the detection ladder and the operator are all in scope. A
+design-level flaw found before implementation is the cheapest flaw to fix.
 
 ## Fail-open disclosure
 
-Trishula is fail-open by default: an unavailable engine degrades to pass-through
-rather than an outage. Bypass-by-failure is by design and documented per policy;
-reports arguing otherwise will be triaged as design discussions, not
-vulnerabilities.
+Trishula is fail-open by default: an unavailable engine degrades to
+pass-through rather than an outage. Bypass-by-failure is by design and
+documented per policy. The project triages contrary reports as design
+discussions, not vulnerabilities.
 
 ## Special considerations for this project
 
 Trishula is an **inline enforcement point**: it sits in the request path and
-holds kernel-level drop authority by design. Vulnerabilities in it are
-high-value by nature. Keep that in mind when testing.
+holds kernel-level drop authority by design. Vulnerabilities in it carry high
+value by nature. Test with that in mind.
 
-- **Test only what you own.** Deploy against clusters and traffic you own or
-  are authorised to test.
-- **eBPF material is sensitive.** Kernel-side programs, map contents and the
-  verdict records (which describe request flows) must be treated as
-  security-relevant material. Nothing is committed; do not paste real map
-  dumps or verdict records into issues or PRs.
+- **Test only what you own.** Deploy against owned or authorised clusters and
+  traffic only.
+- **eBPF material is sensitive.** Treat kernel-side programs, map contents and
+  the verdict records (which describe request flows) as security-relevant
+  material. Nothing is committed; never paste real map dumps or verdict
+  records into issues or PRs.
 - **Policy bypass is a vulnerability class here.** A bug that silently skips
   the ladder verdict chain, forces fail-open beyond the declared
   `failureMode`, or drops verdict-record lines is a security bug, not a
@@ -211,28 +212,29 @@ high-value by nature. Keep that in mind when testing.
 
 **Supply-chain and dependency integrity**
 
-- Dependency Review — every PR is checked for license and vulnerability
-  differences versus its base
+- Dependency Review checks every PR for licence and vulnerability differences
+  versus its base
   ([.github/workflows/dependency-review.yml](.github/workflows/dependency-review.yml)).
-- OpenSSF Scorecard — run on every change; results publish as a badge and SARIF
-  code-scanning upload
+- OpenSSF Scorecard runs on every change; results publish as a badge and as a
+  SARIF code-scanning upload
   ([.github/workflows/scorecards.yml](.github/workflows/scorecards.yml)).
-- Dependabot — dependency manifests kept current; enable alerts in repo settings.
+- Dependabot keeps the dependency manifests current; enable alerts in repo
+  settings.
 
 **Secret hygiene**
 
-- Secret scanning and push protection — enabled in repo settings; blocked
-  pushes containing credentials.
+- Secret scanning and push protection are enabled in repo settings; blocked
+  pushes carry credentials.
 - Local pre-commit runs private-key detection on every change.
 
 **Reproducibility controls**
 
-- All commits are GPG/SSH-signed; unsigned commits are not merged.
+- All commits carry a GPG or SSH signature. Unsigned commits do not merge.
 
 **Known boundaries, stated plainly**
 
-- The project is pre-alpha; CI gates prove build health and parity claims, not
-  production readiness. The README checklist marks what actually works.
+- The project is pre-alpha. The CI gates prove build health and parity claims,
+  not production readiness. The README checklist marks what actually works.
 
-Open a [general issue](https://github.com/trishula-dev/trishula/issues/new) for
-non-sensitive questions; security reports follow the channels above.
+Open a [general issue](https://github.com/trishula-dev/trishula/issues/new)
+for non-sensitive questions. Security reports follow the channels above.

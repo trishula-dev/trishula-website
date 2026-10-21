@@ -3,17 +3,17 @@
 ## Our standard
 
 Everyone participating in the Trishula project — issues, pull requests,
-discussions, and the docs site — is expected to be professional and respectful.
-Debate the change, not the person.
+discussions, and the docs site — is expected to be professional and
+respectful. Debate the change, not the person.
 
 ## Expected behaviour
 
 - Use welcoming and inclusive language.
 - Be respectful of differing viewpoints and experience.
-- Gracefully accept constructive criticism.
-- Focus on what is best for the community and the project.
-- Assume good faith in others' comments and contributions; security critique is
-  welcome, contempt is not.
+- Accept constructive criticism with grace.
+- Put what is best for the community and the project first.
+- Assume good faith in others' comments and contributions. Security critique
+  is welcome; contempt is not.
 
 ## Unacceptable behaviour
 
@@ -26,15 +26,15 @@ Debate the change, not the person.
 
 ## Scope
 
-Applies in all project spaces (repository, issues, PRs, the docs site) and when
-representing the project publicly.
+The scope covers all project spaces (repository, issues, PRs, the docs site)
+and every place the project represents itself publicly.
 
 ## Enforcement
 
-Instances of unacceptable behaviour are reported to the project contact,
-**[Shain Singh](mailto:shain.singh@owasp.org)**. All reports are reviewed and
-may result in a response deemed necessary and appropriate: warning, temporary
-ban, or permanent ban from project spaces. Reports are treated confidentially.
+Report instances of unacceptable behaviour to the project contact,
+**[Shain Singh](mailto:shain.singh@owasp.org)**. The project reviews every
+report. Where warranted, the response is a warning, a temporary ban or a
+permanent ban from project spaces. Reports stay confidential.
 
 Security vulnerabilities are **not** conduct matters — follow
 [SECURITY.md](SECURITY.md) instead.
