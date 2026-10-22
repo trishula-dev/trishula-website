@@ -26,6 +26,8 @@ jobs:
       - uses: quarto-dev/quarto-actions/setup@v2
       - name: Render site
         run: quarto render
+      - name: Carry the CNAME in the artifact
+        run: cp CNAME _site/CNAME
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
