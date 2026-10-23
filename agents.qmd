@@ -23,7 +23,7 @@ the file's own table of contents at its usual anchors:
 ## Architecture Decision Records
 
 Structural changes carry an ADR in the same PR. Most slices are
-leaf-sized — the issue's PRD reference IS the design record, no ADR
+leaf-sized — the issue's spec reference IS the design record, no ADR
 needed — write one only when the change **introduces a new persistent
 artifact** or **removes or changes one**: a wire format, a kernel map
 layout, a CRD field, a gate script.
