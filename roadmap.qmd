@@ -32,7 +32,7 @@ Delivered scope spans inception to the 2026.01-rc1 release. Each step carries it
 - Every verdict emits three correlated records — trace, metric, log — tied by request id ([#11](https://github.com/trishula-dev/trishula/issues/11), [PR](https://github.com/trishula-dev/trishula/pull/101)).
 - Automated clients are distinguishable from browsers by traffic fingerprints, validated against published test vectors ([#12](https://github.com/trishula-dev/trishula/issues/12), [PR](https://github.com/trishula-dev/trishula/pull/99)).
 - A route's published API schema acts as an allow-list: non-conforming requests are rejected with a diagnostic naming the violated field ([#13](https://github.com/trishula-dev/trishula/issues/13), [PR](https://github.com/trishula-dev/trishula/pull/102)).
-- The platform's limits are stated, not implied: the README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)). The release is signed and published ([v0.1.0](https://github.com/trishula-dev/trishula/releases/tag/v0.1.0)).
+- The platform's limits are stated, not implied: the README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)). The release is signed and published ([2026.01-rc1](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc1)).
 
 ## Roadmap
 
