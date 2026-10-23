@@ -3,10 +3,10 @@ title: "Trishula"
 subtitle: "An eBPF-native, developer-first Web Application and API Firewall for Kubernetes"
 ---
 
-[![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![release v0.1.0](https://img.shields.io/github/v/release/trishula-dev/trishula)](https://github.com/trishula-dev/trishula/releases/tag/v0.1.0) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![OpenSSF Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15183)
+[![License: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![release 2026.01-rc1](https://img.shields.io/github/v/release/trishula-dev/trishula)](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc1) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![OpenSSF Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15183)
 
 ::: {.callout-note appearance="simple"}
-**Status: Phase 0 delivered (v0.1).** The [research paper](#paper) records the design; a shipped, gate-verified Phase 0 stands behind it. The [TR-14 exit PR](https://github.com/trishula-dev/trishula/pull/108) carries the exit checklist with per-criterion evidence. What exists on `main` today, per component:
+**Status: Phase 0 delivered (2026.01-rc1).** The [research paper](#paper) records the design; a shipped, gate-verified Phase 0 stands behind it. The [TR-14 exit PR](https://github.com/trishula-dev/trishula/pull/108) carries the exit checklist with per-criterion evidence. What exists on `main` today, per component:
 
 - **Kernel shield** — a CO-RE XDP shield (ACL, verdict cache, ban table) plus a TC flow producer and Go loaders ([shield loaders, merge ed9b271](https://github.com/trishula-dev/trishula/commit/ed9b2714512ecad1bb6b0960eeeb7951e9693726)). The in-VM kernel enforcement E2E shows four facts ([#10](https://github.com/trishula-dev/trishula/issues/10#issuecomment-6093609582)): the ban `TC_ACT_SHOT`; the expiry auto-lift; the reconciler; the JSONL evidence.
 - **Userspace engine, ladder slices** — a transparent proxy behind NGF with hop evidence ([#6](https://github.com/trishula-dev/trishula/issues/6#issuecomment-6091479891)); ingest → HTTP/1 parse → ladder S0–S5 with the verdict vocabulary. The slices:
@@ -174,9 +174,9 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 
 | Milestone | Items |
 |---|---|
-| **v0.1** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit |
-| **v0.2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_process, DX gate, bench, multi-tenancy, Envoy lane |
-| **v0.3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
+| **2026.01-rc1** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit |
+| **2026.01-rc2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_process, DX gate, bench, multi-tenancy, Envoy lane |
+| **2026.01-rc3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
 | **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): the socket-plane L7 fast path study (Beeline), the WAFPolicy→eBPF compiler spike, the kernel-altitude TLS posture (kTLS vs no-key signals); specified at §9.7/§9.9 |
 Contributions follow the [contributing guide](contributing.html). Pick an issue labelled `complexity:starter`, or any `area:*` that fits. The issue body carries the design source. Branch + PR against `trishula-dev/trishula` (MIT).
 
