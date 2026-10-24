@@ -4,7 +4,8 @@ title: "Recipes"
 
 Recipes are short task pages. Each recipe solves one task. Each recipe ends with a check you can run.
 The recipes rise in difficulty. Recipe 1 installs Trishula on a local Docker provider and reads the first verdict.
-The later recipes write rules, read verdict records and tune enforcement. Seven more recipes are planned.
+Recipe 2 applies a WAFPolicy and reads the verdict line.
+The later recipes write rules, read verdict records and tune enforcement. Six more recipes are planned.
 
 ## The recipe ramp
 
@@ -141,4 +142,115 @@ Smoke run, 2026-10-24, on the OrbStack-provided Kubernetes provider with NGF 1.6
 - `lab/dx1/verify.sh`: exit 0. The hop evidence printed.
 
 The gate composes the same three legs. No separate gate run is recorded.
-Recipes 2 to 8 stay PENDING until a worked pin and a smoke run exist.
+
+## Recipe 2 — Apply your first WAFPolicy: CR plus one curl, the verdict line
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`lab/dx1/apply-effect.sh`](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/apply-effect.sh) | Getting started | easy | 2 min after Recipe 1 | policy + engine | policy, WAFPolicy, CEL, verdict |
+
+### Problem
+
+You have the lab from Recipe 1. You want one WAFPolicy CR to gate one route.
+You want the verdict line on the response. You want the same verdict in the engine log.
+You want the transparent requests to still pass.
+
+### Solution
+
+The lab stays up from Recipe 1. You need kubectl and curl.
+
+1. Run the apply→effect leg. The leg applies the CRD and the lab policy.
+The leg times the apply→effect round trip. The leg then runs the fail-closed scenario:
+
+```bash
+bash lab/dx1/apply-effect.sh
+```
+
+2. Read the printed evidence. The shapes below carry placeholders:
+
+```text
+== pre-policy baseline: the benign probe passes transparently (200)
+== (b) t0 — kubectl apply dx1-wafpolicy.yaml
+== effect: SQLi probe → 403
+HTTP/1.1 403 Forbidden
+== M9 apply→effect: <ms> (target ≤ 5s) — PASS
+== fail-closed scenario: <ms> from apply(broken) to the logged compile error; traffic unchanged; pods Ready
+```
+
+3. Gate one probe with one curl. The shapes below come from the recorded run.
+Volatile fields stand as placeholders:
+
+```bash
+NODE_IP=$(kubectl get nodes -o go-template --template '{{range .items}}{{range .status.addresses}}{{if eq .type "InternalIP"}}{{.address}} {{end}}{{end}}{{end}}' | awk '{print $1}')
+curl -s -i -X POST "http://${NODE_IP}:31437/v1/chat/completions?q=UNION%20SELECT%2F%2A" \
+  -H "Host: dx1-routed.dx1.example.com"
+```
+
+The blocked probe answers 403 and carries the verdict line:
+
+```text
+HTTP/1.1 403 Forbidden
+X-Trishula-Decision: block
+X-Trishula-Hop: engine
+X-Trishula-Rule: DX-LAB-001
+
+blocked by DX-LAB-001
+```
+
+4. Check the benign request. The default action keeps the transparent forward:
+
+```bash
+curl -s -i -X POST "http://${NODE_IP}:31437/v1/chat/completions?q=greeting" \
+  -H "Host: dx1-routed.dx1.example.com"
+```
+
+```text
+HTTP/1.1 200 OK
+X-Trishula-Decision: pass
+X-Trishula-Hop: engine
+```
+
+### Discussion
+
+The policy CR declares `defaultAction: pass` and one rule set.
+The rule set points at the rule pack. The pack sits in a ConfigMap (`dx1-sqli`) in the policy namespace.
+The pack carries one CEL rule:
+
+```text
+request.method == "POST" &&
+path.matches("/v1/chat/*") &&
+request.query.contains("UNION")
+```
+
+The operator compiles the rule into the bundle. The engine picks up the bundle. No restart happens.
+The response carries the verdict vocabulary: `pass` and `block`. The blocked response names the rule id.
+The engine log carries the same verdict line:
+
+```text
+engine: decision block (rule=DX-LAB-001) for POST /v1/chat/completions
+```
+
+The apply→effect leg carries the 5 s M9 budget. The gate fails above the budget.
+A broken policy fails at compile. No bundle ships. The traffic shape does not change. Both pods stay Ready.
+A bad CR keeps the last good decisions. That is the fail-closed posture.
+
+### See also
+
+- [spec §11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl) — the CEL rule surface.
+- [The WAFPolicy CRD](https://github.com/trishula-dev/trishula/blob/main/manifests/crd/wafpolicy-crd.yaml) · [The lab policy](https://github.com/trishula-dev/trishula/blob/main/deployment/dx1/manifests/dx1-wafpolicy.yaml) · [The rule pack](https://github.com/trishula-dev/trishula/blob/main/deployment/dx1/manifests/dx1-rulepack-sqli.yaml).
+- [TR-08c issue #76](https://github.com/trishula-dev/trishula/issues/76) — the apply→effect gate.
+- [The DX1 lab README](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/README.md) — the three steps and the knobs.
+- Recipe 1 above — the install path.
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, on the OrbStack-provided Kubernetes provider with NGF 1.6.2:
+
+- `lab/dx1/apply-effect.sh`: exit 0. The M9 leg read 1860 ms. The fail-closed leg read 1009 ms.
+- The verdict curls: the benign POST read 200 with `X-Trishula-Decision: pass`. The SQLi probe read 403 with `X-Trishula-Decision: block` and `X-Trishula-Rule: DX-LAB-001`.
+- The engine log carried the same decision line.
+
+Recipes 3 to 8 stay PENDING until a worked pin and a smoke run exist.
