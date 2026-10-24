@@ -89,10 +89,10 @@ the [ladder semantics](https://github.com/trishula-dev/trishula/blob/main/docs/s
 10. A promoted ban lands in the kernel ban table. The next packet pays the kernel price. The engine also back-fills verdicts to the cache.
 11. Every step emits one OTel span. The verdict record carries rule IDs, phase and the score ladder ([the state figure](#fig-state)).
 
-::: {#fig-kernel .ppf-fig}
+::: {.ppf-fig}
 ```{mermaid}
-#| label: fig-kernel
-#| fig-cap: "The kernel plane: the packet filter on the network card. The checks cost about 1 µs per packet. A known flow never reaches [the gateway](#fig-gateway)."
+%%| label: fig-kernel
+%%| fig-cap: "The kernel plane: the packet filter on the network card. The checks cost about 1 µs per packet. A known flow never reaches [the gateway](#fig-gateway)."
 flowchart LR
     C["Client"] -->|"1 · TCP SYN"| XDP
     XDP["XDP at NIC:<br/>allow/deny + flood check"] --> BT{"Ban table:<br/>repeat offender?"}
@@ -102,10 +102,10 @@ flowchart LR
     click PASS "#fig-gateway" "On to the gateway"
 ```
 :::
-::: {#fig-gateway .ppf-fig}
+::: {.ppf-fig}
 ```{mermaid}
-#| label: fig-gateway
-#| fig-cap: "The gateway and the engine node: the gateway ends TLS and steers protected routes. The tap classifies the flow and streams metadata to the engine; the request view enters [the ladder](#fig-ladder)."
+%%| label: fig-gateway
+%%| fig-cap: "The gateway and the engine node: the gateway ends TLS and steers protected routes. The tap classifies the flow and streams metadata to the engine; the request view enters [the ladder](#fig-ladder)."
 flowchart LR
     PASS["Pass — flow marked"] -->|"2 · TCP continues"| GW["NGF Gateway:<br/>TLS ends, steers"]
     GW -->|"plaintext hop"| ENG["trishula-engine:<br/>transparent proxy"]
@@ -137,10 +137,10 @@ The first decisive verdict short-circuits the walk; the action order: block, cha
 
 :::
 
-::: {#fig-verdicts .ppf-fig}
+::: {.ppf-fig}
 ```{mermaid}
-#| label: fig-verdicts
-#| fig-cap: "The verdicts and the response: allow forwards; block, ban and challenge answer locally; log and shadow mark and continue. State returns follow in [the state figure](#fig-state)."
+%%| label: fig-verdicts
+%%| fig-cap: "The verdicts and the response: allow forwards; block, ban and challenge answer locally; log and shadow mark and continue. State returns follow in [the state figure](#fig-state)."
 flowchart LR
     VD{"Verdict"} -->|allow| VA["Forward"] --> POOL["App + model pools"]
     POOL -->|"8 · response"| RP["Response:<br/>phase 4 + exfil"] -->|to client| OUT["Back to client"]
@@ -157,10 +157,10 @@ flowchart LR
     click VD "#fig-ladder" "Back to the ladder"
 ```
 :::
-::: {#fig-state .ppf-fig}
+::: {.ppf-fig}
 ```{mermaid}
-#| label: fig-state
-#| fig-cap: "The state returns: bans travel kernel-ward; verdicts backfill the cache; every step records telemetry; the operator supplies bundles and seeds the maps. Back to [the edge](#fig-kernel)."
+%%| label: fig-state
+%%| fig-cap: "The state returns: bans travel kernel-ward; verdicts backfill the cache; every step records telemetry; the operator supplies bundles and seeds the maps. Back to [the edge](#fig-kernel)."
 flowchart LR
     subgraph SRC["9–11 · every verdict writes state"]
         S6X["S6 · score breach"]
