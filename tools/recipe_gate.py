@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""recipe_gate.py — the site's recipe-acceptance gate (TR-WS-12, website#62).
+
+Ported from the kailash-book gate (kailash-book#11) to the site's shape:
+one `recipes*.qmd` page with `## Recipe N — <title>` sections.
+
+Checks per page:
+  1. single H1 (the YAML title is the page's only H1).
+  2. ramp cross-check: every published `## Recipe N` section carries a
+     matching ramp row, by number AND by title.
+  3. per published recipe: the header strip columns (Tool / Section /
+     Level / Time / Layer / Tags), the anatomy H3 sections (Problem /
+     Solution / Discussion / See also / Provenance).
+  4. provenance footer: `Verified against` + a commit-pinned link + a
+     verified-at date.
+  5. no-invented-evidence: bash/sh/python fences carry no prompt glyphs
+     (`$ cmd`, `>>> `, `user@host:`) — commands yes, transcripts no.
+  6. PENDING ownership: the closing PENDING span must leave out every
+     published recipe number — no silent drop of an unworked ramp row.
+
+Exit 0 green / 1 red; one failure line per violated check.
+Self-test: tests/test_recipe_gate.py (RED fixtures, offline).
+"""
+from __future__ import annotations
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+STRIP_FIELDS = ["tool", "section", "level", "time", "layer", "tags"]
+REQUIRED_SECTIONS = ["problem", "solution", "discussion", "see also", "provenance"]
+RECIPE_HEAD = re.compile(r"(?m)^## Recipe (\d+) — (.+?)\s*$")
+RAMP_ROW = re.compile(r"(?m)^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|")
+PENDING_SPAN = re.compile(r"(?i)recipes?\s+(\d+)\s+to\s+(\d+)\s+(?:are |stay |is )?pending")
+COMMIT_LINK = re.compile(r"\]\((https://github\.com/[^)]*/commit/[0-9a-f]{7,40})\)")
+DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+VERIFIED = re.compile(r"(?i)verified against")
+
+PROMPT_GLYPHS = [
+    re.compile(r"(?m)^\$\s+\S"),                                   # "$ cmd" PS1
+    re.compile(r"(?m)^>>> \S"),                                    # python REPL
+    re.compile(r"(?m)^[A-Za-z0-9_.@~-]+@[A-Za-z0-9._-]+[:~]\s"),   # user@host:
+]
+
+
+def body(text: str) -> str:
+    return re.split(r"^---\s*$", text, maxsplit=2, flags=re.M)[-1]
+
+
+def unfenced(text: str) -> str:
+    return re.sub(r"```[\s\S]*?```", "", text)
+
+
+def section_bodies(text: str) -> list[tuple[int, str, str]]:
+    """[(n, title, segment)] for every `## Recipe N — <title>` section."""
+    out = []
+    heads = list(RECIPE_HEAD.finditer(text))
+    for i, m in enumerate(heads):
+        seg_end = heads[i + 1].start() if i + 1 < len(heads) else len(text)
+        out.append((int(m.group(1)), m.group(2).strip(), text[m.start():seg_end]))
+    return out
+
+
+def parse_ramp(text: str) -> dict[int, str]:
+    ramp: dict[int, str] = {}
+    segm = text.split("## The recipe ramp")
+    if len(segm) > 1:
+        ramp_zone = segm[1].split("## ")[0]
+        for m in RAMP_ROW.finditer(ramp_zone):
+            ramp[int(m.group(1))] = m.group(2).strip()
+    return ramp
+
+
+def check_page(path: Path) -> list[str]:
+    text = path.read_text(encoding="utf-8")
+    v: list[str] = []
+    b = body(text)
+
+    # 1. single H1 (strip fenced code; bash `#` comments are not headings)
+    if re.search(r"(?m)^# \S", unfenced(b)):
+        v.append("single-h1: body H1 present (the YAML title is the only H1)")
+
+    published = section_bodies(text)
+    ramp = parse_ramp(text)
+
+    # 2. ramp cross-check
+    for n, title, _ in published:
+        if n not in ramp:
+            v.append(f"ramp: published recipe {n} is missing a ramp row")
+        elif ramp[n] != title:
+            v.append(f"ramp: recipe {n} title drift (ramp '{ramp[n]}' vs section '{title}')")
+        if ramp and n not in ramp and n > max(ramp):
+            v.append(f"ramp: published recipe {n} lands outside the planned ramp")
+
+    # 3.+4. per published recipe: strip, anatomy, provenance
+    for n, _title, seg in published:
+        strip_line = next((l for l in seg.splitlines()
+                           if re.match(r"\s*\|\s*Tool\s*\|", l)), None)
+        if not strip_line:
+            v.append(f"recipe {n}: no header strip (| Tool | ... row)")
+        else:
+            low = strip_line.lower()
+            for fld in STRIP_FIELDS:
+                if not re.search(rf"\|\s*{fld}\s*\|", low):
+                    v.append(f"recipe {n}: header strip field missing: {fld}")
+        heads = {h.strip().lower() for h in re.findall(r"(?m)^### (.+)$", seg)}
+        for s in REQUIRED_SECTIONS:
+            if s not in heads:
+                v.append(f"recipe {n}: missing section: {s}")
+        if not (VERIFIED.search(seg) and COMMIT_LINK.search(seg) and DATE.search(seg)):
+            v.append(f"recipe {n}: provenance footer missing (verified against + commit pin + date)")
+        for fm in re.finditer(r"```(?:bash|sh|console|shell|python|py)\n([\s\S]*?)```", seg):
+            blk = fm.group(1)
+            for pat in PROMPT_GLYPHS:
+                if pat.search(blk):
+                    v.append(f"recipe {n}: no-invented-evidence: prompt-glyph block ({pat.pattern[:20]})")
+                    break
+
+    # 6. PENDING span vs published set
+    tail = b[-800:]
+    m = PENDING_SPAN.search(tail)
+    published_ns = {n for n, _, _ in published}
+    unworked = {n for n in ramp if n not in published_ns}
+    if ramp and m:
+        lo, hi = int(m.group(1)), int(m.group(2))
+        span_ns = {n for n in ramp if lo <= n <= hi}
+        clash = span_ns & published_ns
+        if clash:
+            v.append(f"pending-ownership: published recipes {sorted(clash)} also sit inside the PENDING span {lo} to {hi}")
+        dropped = unworked - span_ns
+        if dropped:
+            v.append(f"pending-ownership: unworked ramp recipes {sorted(dropped)} sit outside the PENDING span {lo} to {hi}")
+    elif ramp and unworked:
+        v.append("pending-ownership: the ramp carries unworked plans but no closing PENDING span")
+
+    return v
+
+
+def run_gate(root: Path) -> list[tuple[str, list[str]]]:
+    pages = sorted(root.glob("recipes*.qmd"))
+    if not pages:
+        return [(str(root), ["no recipes*.qmd page found"])]
+    return [(p.name, check_page(p)) for p in pages]
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="recipe-acceptance gate (site form)")
+    ap.add_argument("--root", default=".")
+    ap.add_argument("--report", default=None, help="write a JSON report here")
+    args = ap.parse_args()
+    results = run_gate(Path(args.root))
+    failures = [f"{name}: {f}" for name, fs in results for f in fs]
+    n_pages = len(results)
+    if args.report:
+        Path(args.report).write_text(json.dumps({
+            "failures": failures, "pages_checked": n_pages,
+            "verdict": "GREEN" if not failures else "RED",
+        }, indent=1) + "\n")
+    if failures:
+        print(f"recipe-gate: RED — {len(failures)} failures over {n_pages} pages")
+        for f in failures:
+            print("  -", f)
+        return 1
+    print(f"recipe-gate: GREEN ({n_pages} page checked)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
