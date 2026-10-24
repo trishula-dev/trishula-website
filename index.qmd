@@ -73,152 +73,121 @@ Each verdict is a correlated OpenTelemetry record (`trishula.verdict.v1`). Dashb
 
 ### The packet path, end to end
 
-Three figures follow one request from the wire to the app pool and back: [figure 1](#fig-journey), [figure 2](#fig-ladder) and [figure 3](#fig-state).
+Five views follow one request from the wire to the app pool and back: [the kernel plane](#fig-kernel), [the gateway and the engine node](#fig-gateway), [the ladder](#fig-ladder), [the verdicts](#fig-verdicts) and [the state returns](#fig-state).
 The canonical records: the [request lifecycle](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#83-request-lifecycle),
 the [ladder semantics](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures), the [two-plane principle](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#91-the-two-plane-principle), the
 [ban algorithm](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) and the [telemetry contract](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#15-opentelemetry-observability).
 
-1. The client sends TCP. XDP at the NIC reads the LPM ACL and the flood state.
+1. The client sends TCP. XDP at the NIC reads the IP allow/deny list and the flood state ([the kernel plane](#fig-kernel)).
 2. The ban table drops repeat offenders at line rate, about 1 µs per packet. The verdict cache answers known flows without engine work.
-3. The gateway terminates TLS, matches the HTTPRoute, and steers `trishula-engine`. Any conformant gateway steers the same way.
+3. The gateway terminates TLS, matches the HTTPRoute, and steers `trishula-engine` ([the gateway figure](#fig-gateway)). Any conformant gateway steers the same way.
 4. Engine-node veths carry the flow. TC tags the flow and publishes ring-buffer events. The events carry metadata only.
 5. The engine reconstructs HTTP/1.1, h2, gRPC and WebSocket. The output is the structured request view.
-6. The ladder walks S0 to S7 over one compiled bundle. The first decisive verdict short-circuits the walk. The action order: block, challenge, log, pass.
-7. `allow` forwards upstream. `block` answers a local 403. A ban answers 429 with `Retry-After` plus an evidence record. `challenge` issues an evidence request. `log` and `shadow` mark and continue.
+6. The ladder walks S0 to S7 over one compiled bundle ([the ladder table](#fig-ladder)). The first decisive verdict short-circuits the walk. The action order: block, challenge, log, pass.
+7. `allow` forwards upstream. `block` answers a local 403. A ban answers 429 with `Retry-After` plus an evidence record. `challenge` issues an evidence request. `log` and `shadow` mark and continue ([the verdict figure](#fig-verdicts)).
 8. The response chain re-inspects: CRS phase 4, exfiltration checks, streaming-aware.
 9. ScoredWindowBan watches score breaches. The promotion path runs shadow first.
 10. A promoted ban lands in the kernel ban table. The next packet pays the kernel price. The engine also back-fills verdicts to the cache.
-11. Every step emits one OTel span. The verdict record carries rule IDs, phase and the score ladder.
+11. Every step emits one OTel span. The verdict record carries rule IDs, phase and the score ladder ([the state figure](#fig-state)).
 
-::: {#fig-journey .ppf-fig}
+::: {#fig-kernel .ppf-fig}
 ```{mermaid}
-flowchart TB
-    C["Client (TLS)"]
+flowchart LR
+    C["Client"] -->|"1 · TCP SYN"| XDP
+    XDP["XDP at NIC:<br/>allow/deny + flood check"] --> BT{"Ban table:<br/>repeat offender?"}
+    BT -->|hit| DROP["Drop, ~1 µs"]
+    BT -->|miss| VC{"Verdict cache:<br/>verdict known?"}
+    VC -->|"known or new"| PASS["Pass — flow marked"]
+    click PASS "#fig-gateway" "On to the gateway"
+```
+:::
 
-    subgraph KP["1 · Kernel plane (trishula-shield DaemonSet)"]
-        XDP["XDP at NIC:<br/>LPM ACL + flood check"]
-        BT{"Ban table:<br/>repeat offender?"}
-        DROP["Drop at line rate,<br/>~1 µs"]
-        VC{"Verdict cache:<br/>verdict known?"}
-        PASS["Pass — flow marked"]
-        XDP --> BT
-        BT -->|"hit"| DROP
-        BT -->|"miss"| VC
-        VC -->|"known or new"| PASS
-    end
-    C -->|"1 · TCP SYN"| XDP
+*The kernel plane: the packet filter on the network card. The checks cost about 1 µs per packet. A known flow never reaches [the gateway](#fig-gateway).*
 
-    PASS -->|"2 · TCP continues"| GW["3 · NGF Gateway:<br/>TLS ends · HTTPRoute match"]
-    GW -->|"plaintext hop<br/>(h2c / HTTP/1.1)"| ENG["5 · trishula-engine:<br/>transparent proxy"]
+::: {#fig-gateway .ppf-fig}
+```{mermaid}
+flowchart LR
+    PASS["Pass — flow marked"] -->|"2 · TCP continues"| GW["NGF Gateway:<br/>TLS ends, steers"]
+    GW -->|"plaintext hop"| ENG["trishula-engine:<br/>transparent proxy"]
 
     subgraph EN["4 · Engine node"]
-        TC["TC at veth:<br/>classify + rate counters"]
-        RB["Ring buffer:<br/>flow events, metadata only"]
-        TC -.->|events| RB
+        TC["TC tap at veth:<br/>classify + counters"] -.->|events| RB["Ring buffer:<br/>flow events"]
     end
     RB -.->|drain| ENG
+    ENG -->|"5 · reconstruct<br/>HTTP/1.1 · h2 · gRPC · WS"| RV["Structured<br/>request view"]
 
-    RET["3 · State returns (figure 3)"]
-    RET -.->|"ban push"| BT
-    RET -.->|"backfill"| VC
-
-    ENG -->|"5 · reconstruct HTTP/1.1 · h2/gRPC · WS<br/>into the structured request view"| EXIT["Structured request view<br/>→ figure 2"]
-
-    click RET "#fig-state" "Jump to figure 3: the state returns"
-    click EXIT "#fig-ladder" "Jump to figure 2: the ladder walk"
+    click RV "#fig-ladder" "On to the ladder walk"
+    click PASS "#fig-kernel" "Back to the edge"
 ```
-*Figure 1 — the journey: the client to the request view. The kernel plane drops, the gateway steers, the engine parses. The dotted node returns state — [figure 3](#fig-state).*
 :::
 
-::: {#fig-ladder .ppf-fig}
+*The gateway and the engine node: the gateway ends TLS and steers protected routes. The tap classifies the flow and streams metadata to the engine; the request view enters [the ladder](#fig-ladder).*
+
+::: {#fig-ladder}
+
+| # | Stage | What it reads | Source |
+|---|---|---|---|
+| S0 | kernel hits | the ban table + the verdict cache; a hit settles at ~1 µs | kernel maps |
+| S1 | Vectorscan | the compiled hot-subset matcher | the operator's bundle |
+| S2 | CRS | the OWASP Core Rule Set through embedded Coraza | the CRS bundle |
+| S3 | CEL rules | the developer's rules over the structured request view | `RuleSet` CR |
+| S4 | OpenAPI schema | the route's declared shapes only (positive security) | `APISpec` CR |
+| S5 | bots | JA4 + header fingerprints + behavioural windows | the shield + TLS hop |
+| S6 | rate windows | per-route counters; breaches + ban events | the kernel counters |
+| S7 | ML scorer | the local ONNX score + the async judge | `MLModel` bundle |
+
+The first decisive verdict short-circuits the walk; the action order: block, challenge, log, pass ([§2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)). Most requests pass at the kernel or matcher stage. [The verdicts](#fig-verdicts) carry the outcomes.
+
+:::
+
+::: {#fig-verdicts .ppf-fig}
 ```{mermaid}
-flowchart TB
-    IN["6 · Walk the ladder — one compiled bundle (figure 1)"]
-
-    subgraph LD["First decisive verdict short-circuits"]
-        S0["S0 · kernel hits:<br/>bans + cached verdicts"]
-        S1["S1 · Vectorscan hot subset"]
-        S2["S2 · CRS via embedded Coraza"]
-        S3["S3 · CEL rules, cost-budgeted"]
-        S4["S4 · OpenAPI positive security"]
-        S5["S5 · bots: JA4 + header + behaviour"]
-        S6["S6 · rate windows → ban events"]
-        S7["S7 · ML scorer: ONNX + async judge"]
-        S0 --> S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
-    end
-    IN --> S0
-
-    S7 -->|"decisive verdict"| V{"Verdict"}
-    V -->|allow| VA["Forward upstream"] --> POOL["7 · App + model pools"]
-    V -->|block| VB["Local 403"]
-    V -->|ban| VN["429 + Retry-After"]
-    V -->|challenge| VCh["Challenge"]
-    V -->|log + shadow| VL["Continue"]
-    VA --> POOL
-    POOL -->|"8 · response"| RP["Response chain:<br/>CRS phase 4 + exfil checks<br/>streaming-aware"]
-    RP -->|"deliver → gateway → client"| OUTC["Response — figure 1"]
-    VB -->|respond| OUTC
-    VN -->|respond| OUTC
-    VCh -->|respond| OUTC
+flowchart LR
+    VD{"Verdict"} -->|allow| VA["Forward"] --> POOL["App + model pools"]
+    POOL -->|"8 · response"| RP["Response:<br/>phase 4 + exfil"] -->|to client| OUT["Back to client"]
+    VD -->|block| VB["Local 403"]
+    VD -->|ban| VN["429 + Retry-After"]
+    VD -->|challenge| VCh["Challenge"]
+    VD -->|"log / shadow"| VL["Continue"]
+    VB -->|respond| OUT
+    VN -->|respond| OUT
+    VCh -->|respond| OUT
     VL -.->|continue| VA
 
-    click IN "#fig-journey" "Back to figure 1: the journey"
-    click OUTC "#fig-journey" "Back to figure 1: the response path"
+    click OUT "#fig-kernel" "Back to the edge"
+    click VD "#fig-ladder" "Back to the ladder"
 ```
-*Figure 2 — the ladder walk: eight checks over one compiled bundle. The first decisive verdict short-circuits the walk. The action order: block · challenge · log · pass ([§2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)).*
 :::
+
+*The verdicts and the response: allow forwards; block, ban and challenge answer locally; log and shadow mark and continue. State returns follow in [the state figure](#fig-state).*
 
 ::: {#fig-state .ppf-fig}
 ```{mermaid}
-flowchart TB
-    subgraph SRC["9–11 · Every verdict writes state"]
-        S6X["S6 · rate windows:<br/>score breach"]
+flowchart LR
+    subgraph SRC["9–11 · every verdict writes state"]
+        S6X["S6 · score breach"]
         VX["Verdict node"]
-        LDX["Every ladder step"]
+        LDX["Every step"]
     end
 
-    SWB["9 · ScoredWindowBan v1:<br/>findtime · threshold · bantime<br/>shadow first, then enforce"]
-    S6X -.->|"score breach"| SWB
-    SWB -.->|"10 · ban push, kernel-ward"| KB["Kernel ban table<br/>(figure 1)"]
-
-    VX -.->|"10 · verdict backfill"| KC["Kernel verdict cache<br/>(figure 1)"]
-
-    LDX -.->|"11 · every step records"| TEL[("OTel:<br/>one span + metric + log per request<br/>trishula.verdict.v1")]
+    SWB["ScoredWindowBan v1:<br/>shadow, then enforce"]
+    S6X -.->|breach| SWB
+    SWB -.->|"10 · ban push"| KB["Kernel ban<br/>table"]
+    VX -.->|"10 · backfill"| KC["Kernel verdict<br/>cache"]
+    LDX -.->|"11 · records"| TEL[("OTel:<br/>trishula.verdict.v1")]
 
     subgraph CP["trishula-operator"]
-        CRD["CRDs:<br/>WAFPolicy · APISpec<br/>RuleSet · BanPolicy"] --> COMP["Compiler:<br/>signed bundles + matcher DB<br/>+ kernel map values"]
+        CRD["CRDs: WAFPolicy · APISpec<br/>RuleSet · BanPolicy"] --> COMP["Compiler:<br/>bundles + map values"]
     end
-    COMP -->|"hot reload, 5 s budget"| ENGC["Engine (figure 1)"]
+    COMP -->|"reload, 5 s"| ENG["Engine"]
     COMP -.->|"map pre-seed"| KB
 
-    click KB "#fig-journey" "The kernel plane (figure 1)"
-    click KC "#fig-journey" "The kernel plane (figure 1)"
-    click ENGC "#fig-journey" "The engine (figure 1)"
+    click KB "#fig-kernel" "The kernel plane"
+    click ENG "#fig-gateway" "The engine"
 ```
-*Figure 3 — the state returns: bans travel kernel-ward, verdicts backfill the cache, every step records telemetry, and the operator pre-seeds the maps.*
 :::
 
-
-
-### The words the figures use
-
-The audience: HTTP, frontend and Kubernetes developers. The kernel words carry plain meaning:
-
-- **XDP** — a packet filter that runs on the network card, before the OS sees the packet.
-- **TC** — the traffic-control hook on a network interface; here: a per-pod packet tap.
-- **LPM ACL** — an IP allow/deny list with prefix matching (the router's longest-prefix-match).
-- **Verdict cache** — a kernel map of known flows. A known flow skips the whole engine.
-- **Ban table** — a kernel map of active temporal bans. A hit drops at line rate.
-- **Ring buffer (ringbuf)** — a kernel-to-userspace event queue; here: flow events to the engine.
-- **The ladder** — the ordered check list the engine walks (S0 to S7).
-- **CRS / Coraza** — the OWASP Core Rule Set, evaluated through the embedded Coraza engine.
-- **CEL** — the Kubernetes-native rule language; the developer's rule surface.
-- **Vectorscan** — the compiled regex accelerator over the hot rule subset.
-- **JA4** — the TLS client fingerprint: who or what holds the connection, despite encryption.
-- **ML scorer** — the in-line model score (ONNX) with an async judge behind it.
-- **ScoredWindowBan** — the named temporary-ban algorithm: scored events in a window, then a kernel-enforced ban.
-
-The spec ([§2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#11-d1-kubernetes-native-the-waf-is-crds-not-config-files)) carries the full vocabulary.
+*The state returns: bans travel kernel-ward; verdicts backfill the cache; every step records telemetry; the operator supplies bundles and seeds the maps. Back to [the edge](#fig-kernel).*
 
 ## Deployment model
 
