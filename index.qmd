@@ -80,25 +80,116 @@ Negative signatures alone cannot carry this load: the good-traffic risk is too h
 Trishula pairs a kernel-altitude eBPF shield with a full userspace detection ladder. The shape: three components, two planes, one decision record per request.
 
 - **Shield** (DaemonSet, XDP/TC): ACL, verdict cache and ban table, enforced where the packet arrives; fail-open by default.
-- **Engine** (Deployment): the detection ladder S0–S6 — CEL rules under cost budgets, OWASP CRS via embedded Coraza, OpenAPI positive security, rate limits, JA4/behavioural bot detection.
+- **Engine** (Deployment): the detection ladder S0–S7 ([§2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)) — kernel verdict hits, the Vectorscan hot subset, OWASP CRS via embedded Coraza, CEL rules under cost budgets, OpenAPI positive security, bot fingerprints and behaviour, rate limits with kernel-enforced bans, and the ML scorer.
 - **Operator** (Deployment): reconciles `WAFPolicy`/`BanPolicy` CRs into compiled engine bundles and pre-seeds the shield maps. Rollback is a CRD-recorded re-pin.
 
 Each verdict is a correlated OpenTelemetry record (`trishula.verdict.v1`); dashboards ship in-repo.
 
+### The packet path, end to end
+
+The walk below follows one request from the wire to the app pool and back.
+The kernel plane answers the cheap decisions. The engine carries the deep
+checks. Ban state travels back kernel-ward. The canonical records: the
+[request lifecycle](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#83-request-lifecycle),
+the [ladder semantics](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures), the [two-plane principle](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#91-the-two-plane-principle), the
+[ban algorithm](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) and the [telemetry contract](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#15-opentelemetry-observability).
+
+1. The client sends TCP. XDP at the NIC reads the LPM ACL and the flood state.
+2. The ban table drops repeat offenders at line rate, about 1 µs per packet. The verdict cache answers known flows without engine work.
+3. The gateway terminates TLS, matches the HTTPRoute, and steers `trishula-engine`. Any conformant gateway steers the same way.
+4. Engine-node veths carry the flow. TC tags the flow and publishes ring-buffer events. The events carry metadata only.
+5. The engine reconstructs HTTP/1.1, h2, gRPC and WebSocket. The output is the structured request view.
+6. The ladder walks S0 to S7 over one compiled bundle. The first decisive verdict short-circuits the walk. The action order: block, challenge, log, pass.
+7. `allow` forwards upstream. `block` answers a local 403. A ban answers 429 with `Retry-After` plus an evidence record. `challenge` issues an evidence request. `log` and `shadow` mark and continue.
+8. The response chain re-inspects: CRS phase 4, exfiltration checks, streaming-aware.
+9. ScoredWindowBan watches score breaches. The promotion path runs shadow first.
+10. A promoted ban lands in the kernel ban table. The next packet pays the kernel price. The engine also back-fills verdicts to the cache.
+11. Every step emits one OTel span. The verdict record carries rule IDs, phase and the score ladder.
+
 ```{mermaid}
 flowchart LR
-    subgraph KERNEL["kernel plane"]
-        xdp["eBPF shield<br/>XDP + TC"]
-        maps["maps<br/>ACL · verdict cache · ban table"]
+    C["Client<br/>(TLS session)"] -->|"1 · TCP SYN"| XDP
+
+    subgraph KP["KERNEL PLANE — trishula-shield DaemonSet, every node"]
+        direction LR
+        XDP["XDP at NIC:<br/>LPM ACL + flood check"]
+        BT{"Ban table:<br/>repeat offender?"}
+        VC{"Verdict cache:<br/>verdict known?"}
+        TC["TC at engine-node veths:<br/>flow classify + rate counters<br/>metadata only"]
+        RB["Ring buffer:<br/>flow events"]
     end
-    subgraph USER["userspace plane"]
-        lad["detection ladder<br/>S0-S6"]
+
+    DROP["Drop at line rate<br/>about 1 µs, kernel only"]
+    PASS["Pass — flow marked"]
+    GW["NGF Gateway:<br/>TLS terminates here<br/>HTTPRoute match"]
+    ENG["trishula-engine (Deployment):<br/>transparent upstream proxy"]
+
+    subgraph LAD["USERSPACE LADDER — one compiled bundle<br/>first decisive verdict short-circuits<br/>action order: block · challenge · log · pass"]
+        direction LR
+        S0["S0<br/>kernel hits:<br/>bans + cached verdicts"]
+        S1["S1<br/>Vectorscan<br/>hot subset"]
+        S2["S2<br/>CRS via<br/>embedded Coraza"]
+        S3["S3<br/>CEL rules<br/>cost-budgeted"]
+        S4["S4<br/>OpenAPI positive<br/>security"]
+        S5["S5<br/>bots: JA4 + header<br/>+ behaviour"]
+        S6["S6<br/>rate windows:<br/>breach + ban events"]
+        S7["S7<br/>ML scorer:<br/>ONNX + async judge"]
+        S0 --> S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
     end
-    gw["Gateway API<br/>(NGF reference)"] --> lad
-    lad --> app["app pods"]
-    xdp --- maps
-    lad -- verdicts --> otel[("OTLP<br/>trishula.verdict.v1")]
+
+    V{"Verdict"}
+    VA["Allow: forward<br/>headers preserved"]
+    VB["Block: local 403"]
+    VN["Ban: 429 + Retry-After<br/>evidence record"]
+    VCh["Challenge: evidence request"]
+    VL["Log or shadow: continue"]
+    RP["Response chain:<br/>CRS phase 4 + exfil checks<br/>streaming-aware"]
+    POOL["App + model pools"]
+
+    subgraph CP["CONTROL PLANE — trishula-operator"]
+        CRD["CRDs:<br/>WAFPolicy · APISpec<br/>RuleSet · BanPolicy"] --> COMP["Compile:<br/>signed bundles + matcher DB<br/>+ kernel map values"]
+    end
+
+    TEL[("OTel per request:<br/>span + metric + log<br/>trishula.verdict.v1")]
+    SWB["ScoredWindowBan v1:<br/>findtime · threshold · bantime<br/>shadow first, then enforce"]
+
+    XDP --> BT
+    BT -->|"2 hit"| DROP
+    BT -->|"2 miss"| VC
+    VC -->|"2 known flow"| PASS
+    VC -->|"2 new flow"| PASS
+    PASS -->|"3 · TCP continues"| GW
+    GW -->|"3 · plaintext h2c / HTTP/1.1<br/>HTTPRoute backendRef: trishula-engine"| ENG
+    TC -.->|"4 · events"| RB
+    RB -.->|"4 · engine drain"| ENG
+    ENG -->|"5 · reconstruct"| PARSE["Parse:<br/>HTTP/1.1 · h2/gRPC · WS<br/>request view"]
+    PARSE -->|"6 · ladder walk"| LAD
+    LAD -->|"verdict"| V
+    V -->|"7 allow"| VA
+    V -->|"7 block"| VB
+    V -->|"7 ban"| VN
+    V -->|"7 challenge"| VCh
+    V -->|"7 log / shadow"| VL
+    VA --> POOL
+    POOL -->|"8 · response"| RP
+    RP -->|"deliver"| GW
+    GW -->|"response"| C
+    VB -->|"local"| GW
+    VN -->|"local"| GW
+    VCh -->|"local"| GW
+    VL -.->|"continue"| VA
+    S6 -.->|"9 · score breach"| SWB
+    SWB -.->|"10 · ban push, kernel-ward"| BT
+    V -.->|"10 · backfill"| VC
+    ENG -.->|"11 · span + verdict record"| TEL
+    TC -.->|"11 · kernel counters"| TEL
+    COMP -->|"hot reload, 5 s budget"| ENG
+    COMP -.->|"map pre-seed"| BT
 ```
+
+*The two altitudes: O(1) kernel decisions per packet. Full parsing freedom in
+the engine ([§9.1](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#91-the-two-plane-principle)). Dotted edges carry state back kernel-ward and into
+telemetry.*
 
 ## Deployment model
 
@@ -130,7 +221,7 @@ flowchart TB
 - **Node requirements:** kernel ≥ 5.8; the shield is CO-RE and verifier-checked in CI.
 - **Telemetry:** every verdict is an OTLP span + metric + log on `trishula.verdict.v1`; dashboards ship in-repo.
 
-**Detection ladder** (short-circuit ordered): S0 kernel pre-clear (ACL, verdict cache, ban table) → S1 cache re-check → S2 CEL rules (cost-budgeted) → S3 OWASP CRS via embedded Coraza → S4 OpenAPI positive security → S5 rate limits → S6 bot fingerprints and behavioural windows.
+**Detection ladder** ([§2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures); short-circuit on the first decisive verdict): S0 kernel hits (bans + cached verdicts) → S1 Vectorscan hot subset → S2 CRS via embedded Coraza → S3 CEL rules → S4 OpenAPI positive security → S5 bot evidence → S6 rate windows and ban events → S7 ML scorer (local ONNX + async judge).
 ScoredWindowBan converts repeated abuse into kernel-enforced temporary bans. The bans carry evidence records; prefix escalation stays off by default.
 
 ## Design rationale
