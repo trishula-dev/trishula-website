@@ -100,3 +100,23 @@ svg.mermaid-js g.edgeLabel .edgeLabel,
 svg.mermaid-js g.edgeLabel .labelBkg {
   background: transparent !important;
 }
+
+
+/* TR-WS-6: packet-path figures breakout — render at natural size,
+   centred on the page; small screens pan instead of shrink */
+.ppf-fig {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(94vw, 1350px);
+  padding: 0.4em 0;
+}
+.ppf-fig svg {
+  width: 100% !important;
+  height: auto !important;
+  max-width: none !important;
+}
+@media (max-width: 1000px) {
+  .ppf-fig { overflow-x: auto; }
+  .ppf-fig svg { width: 1250px !important; }
+}
