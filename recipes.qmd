@@ -1,0 +1,144 @@
+---
+title: "Recipes"
+---
+
+Recipes are short task pages. Each recipe solves one task. Each recipe ends with a check you can run.
+The recipes rise in difficulty. Recipe 1 installs Trishula on a local Docker provider and reads the first verdict.
+The later recipes write rules, read verdict records and tune enforcement. Seven more recipes are planned.
+
+## The recipe ramp
+
+The table lists the planned ramp. Simple tasks sit first. Advanced tasks sit last.
+A planned recipe stays PENDING until a worked pin and a smoke run exist.
+
+| # | Recipe | Level | Feeds from |
+|---|---|---|---|
+| 1 | Install Trishula on a kind cluster and see the first verdict | easy | [the DX1 lab path, `lab/dx1/`](https://github.com/trishula-dev/trishula/tree/main/lab/dx1) |
+| 2 | Apply your first WAFPolicy: CR plus one curl, the verdict line | easy | [§11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl), the CRD surface |
+| 3 | Read the verdicts: the OTel record shape (`trishula.verdict.v1`) | easy | [§13.4](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#134-otel-verdict-pipeline), the OTLP pipeline |
+| 4 | Write a CEL rule at S3 with a cost budget | medium | [§11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl), [§8.1](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#81-design-principles) |
+| 5 | Tune the CRS exclusion set without dropping the reference posture | medium | [§12](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#12-crs-integration), the differential suite |
+| 6 | Run the ban ladder: ScoredWindowBan shadow, then enforce | hard | [§13](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#13-rate-limiting--bans) |
+| 7 | Pre-seed the kernel maps from the operator bundle | hard | [§9.4](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#94-operator), the seed pack |
+| 8 | Run the CRS differential and the bench harness on your own node | hard | [§16](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#16-cr-differential-suite), [§17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan) |
+
+## The recipe form
+
+Every recipe carries the same parts:
+
+- A header strip table. The columns: Tool, Section, Level, Time, Layer, Tags.
+- **Problem** — the task and its walls.
+- **Solution** — numbered steps. Each step quotes a real command.
+- **Discussion** — what the step did. What to watch. What to tune.
+- **See also** — the linked surfaces.
+- Expected output shows shapes and placeholders only. A recipe never prints an invented transcript.
+- The provenance footer records the pin, the date and the smoke status.
+
+Level is metadata: easy, medium or hard. Level never becomes a navigation layer.
+The prose follows [ASD-STE100](https://en.wikipedia.org/wiki/Simplified_Technical_English):
+
+- One thought per sentence. 20 words at most.
+- Active voice. Present tense. Approved verbs. Digits for numbers.
+- Steps read imperative.
+
+## Recipe 1 — Install Trishula on a kind cluster and see the first verdict
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`lab/dx1/`](https://github.com/trishula-dev/trishula/tree/main/lab/dx1) on any Docker provider (kind, or OrbStack Kubernetes) | Getting started | easy | 15 min | gateway + engine | install, kind, verdict |
+
+### Problem
+
+You want Trishula on a local Kubernetes cluster. You want one enforced verdict on one probe request.
+You want it inside the 15 min M3 gate window. You do not want a hosted cluster or manual manifests.
+
+### Solution
+
+You need docker, crane, helm, kubectl, go and curl. You need one Docker provider:
+kind, or the OrbStack-provided Kubernetes.
+
+1. Clone the product repository:
+
+```bash
+git clone https://github.com/trishula-dev/trishula && cd trishula
+```
+
+2. Run the timed DX1 gate. The gate builds the linux binaries, brings the lab up
+and times the first enforced rule:
+
+```bash
+bash lab/dx1/dx1-gate.sh
+```
+
+3. Read the printed evidence. The shapes below come from the recorded run.
+Volatile values stand as placeholders:
+
+```text
+== pre-policy baseline: the benign probe passes transparently (200)
+== (d) effect: SQLi probe → 403
+HTTP/1.1 403 Forbidden
+== M9 apply→effect: <ms> (target ≤ 5s) — PASS
+== DX1 verify: hop 1 NGF -> hop 2 engine -> hop 3 echo pod all evidenced above
+== Done. The lab remains installed (no teardown).
+```
+
+The gate asserts the verdict fields on the blocked probe: `X-Trishula-Decision: block`
+and `X-Trishula-Rule: DX-LAB-001`. The probe answers 403.
+
+4. The three legs run alone. Each leg is idempotent. The lab stays installed:
+
+```bash
+bash lab/dx1/setup.sh
+bash lab/dx1/apply-effect.sh
+bash lab/dx1/verify.sh
+```
+
+`setup.sh` reuses the cluster, rebuilds the engine image and re-applies the manifests.
+`apply-effect.sh` applies the policy, compiles the bundle and times the apply→effect leg.
+`verify.sh` prints the hop-by-hop evidence. Re-run any leg at any time.
+
+### Discussion
+
+The request path carries three hops:
+
+```text
+client ──> NGF edge-gateway ──> dx1-engine ──> dx1-echo
+```
+
+The engine hop marks its response with `X-Trishula-Hop: engine`.
+A second Host value on the same NodePort skips the engine. The HTTPRoute steers only the engine host.
+
+The apply leg applies the lab `WAFPolicy`. The operator compiles rule `DX-LAB-001` and publishes the bundle.
+The engine picks up the bundle. No restart happens.
+The SQLi probe is a POST with a UNION probe in the query string. The engine answers 403.
+The benign POST still passes: `defaultAction: pass` keeps the transparent forward.
+
+The M9 leg carries a 5 s budget. The recorded smoke read 1174 ms. The M3 budget is 15 min
+from clone to first enforced rule. The gate fails above either budget.
+
+A broken policy fails at compile. The operator publishes no bundle. The engine keeps the loaded bundle.
+The traffic shape does not change. Both pods stay Ready.
+
+On OrbStack-provider Kubernetes, the NGF 2.x dataplane does not register.
+`setup.sh` then installs the NGF 1.6.2 single-pod chart. The hop evidence stays the same.
+
+### See also
+
+- [The DX1 lab README](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/README.md) — the three steps and the knobs.
+- [spec §10.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#102-the-contract-trishula-as-a-gateway-api-citizen) — the Gateway API contract. [spec §10.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#103-the-reference-walkthrough-the-lab-every-claim-is-proven-in) — the reference walkthrough.
+- [The Build page](building.html) — the same loop inside the site's verification story.
+- [DX1 issue #6](https://github.com/trishula-dev/trishula/issues/6) · [TR-08c issue #76](https://github.com/trishula-dev/trishula/issues/76).
+
+### Provenance
+
+Verified against [trishula@7c352f65](https://github.com/trishula-dev/trishula/commit/7c352f6510d12aea7769b726735b1aa107f105df)
+on main, 2026-10-24.
+
+Smoke run, 2026-10-24, on the OrbStack-provided Kubernetes provider with NGF 1.6.2:
+
+- `lab/dx1/setup.sh`: exit 0. The marker `DX1 lab setup complete` printed.
+- `lab/dx1/apply-effect.sh`: exit 0. The M9 leg read 1174 ms. The fail-closed leg read 8758 ms.
+- `lab/dx1/verify.sh`: exit 0. The hop evidence printed.
+
+The gate composes the same three legs. No separate gate run is recorded.
+Recipes 2 to 8 stay PENDING until a worked pin and a smoke run exist.
