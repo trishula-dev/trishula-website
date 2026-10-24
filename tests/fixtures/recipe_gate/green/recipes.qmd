@@ -1,0 +1,70 @@
+---
+title: "Recipes"
+---
+
+## The recipe ramp
+
+| # | Recipe | Level | Feeds from |
+|---|---|---|---|
+| 1 | Install Trishula on a kind cluster and see the first verdict | easy | lab/dx1 |
+| 2 | Apply your first WAFPolicy: CR plus one curl, the verdict line | easy | spec 11.3 |
+
+## Recipe 1 — Install Trishula on a kind cluster and see the first verdict
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`lab/dx1/`](https://github.com/trishula-dev/trishula/tree/main/lab/dx1) | Getting started | easy | 15 min | gateway + engine | install |
+
+### Problem
+
+You want one enforced verdict.
+
+### Solution
+
+```bash
+bash lab/dx1/dx1-gate.sh
+```
+
+### Discussion
+
+The gate times the first enforced rule.
+
+### See also
+
+- [The DX1 lab README](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/README.md).
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+## Recipe 2 — Apply your first WAFPolicy: CR plus one curl, the verdict line
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`lab/dx1/apply-effect.sh`](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/apply-effect.sh) | Getting started | easy | 2 min | policy + engine | policy |
+
+### Problem
+
+You want one policy.
+
+### Solution
+
+```bash
+bash lab/dx1/apply-effect.sh
+```
+
+### Discussion
+
+The leg times the effect.
+
+### See also
+
+- [spec §11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl).
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Recipes 3 to 8 stay PENDING until a worked pin and a smoke run exist.
