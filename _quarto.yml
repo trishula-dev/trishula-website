@@ -5,6 +5,7 @@ project:
     - "index.qmd"
     - "roadmap.qmd"
     - "building.qmd"
+    - "recipes.qmd"
     - "agents.qmd"
     - "contributing.qmd"
     - "security.qmd"
@@ -32,6 +33,8 @@ website:
         text: Deployment
       - href: building.qmd
         text: Build
+      - href: recipes.qmd
+        text: Recipes
     right:
       - href: roadmap.qmd
         text: Roadmap
