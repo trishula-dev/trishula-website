@@ -106,9 +106,8 @@ svg.mermaid-js g.edgeLabel .labelBkg {
    centred on the page; small screens pan instead of shrink */
 .ppf-fig {
   position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(94vw, 1350px);
+  right: 15vw;
+  width: calc(100% + 15vw);
   padding: 0.4em 0;
 }
 .ppf-fig svg {

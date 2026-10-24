@@ -1,7 +1,6 @@
 ---
 title: "Trishula"
 subtitle: "An eBPF-native, developer-first Web Application and API Firewall for Kubernetes"
-toc: false
 ---
 
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-green)](https://github.com/trishula-dev/trishula/blob/main/LICENSE) [![Latest](https://img.shields.io/github/v/release/trishula-dev/trishula)](https://github.com/trishula-dev/trishula/releases) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/trishula-dev/trishula?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/trishula-dev/trishula) [![OpenSSF Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15183)
@@ -92,6 +91,8 @@ the [ladder semantics](https://github.com/trishula-dev/trishula/blob/main/docs/s
 
 ::: {#fig-kernel .ppf-fig}
 ```{mermaid}
+#| label: fig-kernel
+#| fig-cap: "The kernel plane: the packet filter on the network card. The checks cost about 1 µs per packet. A known flow never reaches [the gateway](#fig-gateway)."
 flowchart LR
     C["Client"] -->|"1 · TCP SYN"| XDP
     XDP["XDP at NIC:<br/>allow/deny + flood check"] --> BT{"Ban table:<br/>repeat offender?"}
@@ -101,11 +102,10 @@ flowchart LR
     click PASS "#fig-gateway" "On to the gateway"
 ```
 :::
-
-*The kernel plane: the packet filter on the network card. The checks cost about 1 µs per packet. A known flow never reaches [the gateway](#fig-gateway).*
-
 ::: {#fig-gateway .ppf-fig}
 ```{mermaid}
+#| label: fig-gateway
+#| fig-cap: "The gateway and the engine node: the gateway ends TLS and steers protected routes. The tap classifies the flow and streams metadata to the engine; the request view enters [the ladder](#fig-ladder)."
 flowchart LR
     PASS["Pass — flow marked"] -->|"2 · TCP continues"| GW["NGF Gateway:<br/>TLS ends, steers"]
     GW -->|"plaintext hop"| ENG["trishula-engine:<br/>transparent proxy"]
@@ -120,9 +120,6 @@ flowchart LR
     click PASS "#fig-kernel" "Back to the edge"
 ```
 :::
-
-*The gateway and the engine node: the gateway ends TLS and steers protected routes. The tap classifies the flow and streams metadata to the engine; the request view enters [the ladder](#fig-ladder).*
-
 ::: {#fig-ladder}
 
 | # | Stage | What it reads | Source |
@@ -142,6 +139,8 @@ The first decisive verdict short-circuits the walk; the action order: block, cha
 
 ::: {#fig-verdicts .ppf-fig}
 ```{mermaid}
+#| label: fig-verdicts
+#| fig-cap: "The verdicts and the response: allow forwards; block, ban and challenge answer locally; log and shadow mark and continue. State returns follow in [the state figure](#fig-state)."
 flowchart LR
     VD{"Verdict"} -->|allow| VA["Forward"] --> POOL["App + model pools"]
     POOL -->|"8 · response"| RP["Response:<br/>phase 4 + exfil"] -->|to client| OUT["Back to client"]
@@ -158,11 +157,10 @@ flowchart LR
     click VD "#fig-ladder" "Back to the ladder"
 ```
 :::
-
-*The verdicts and the response: allow forwards; block, ban and challenge answer locally; log and shadow mark and continue. State returns follow in [the state figure](#fig-state).*
-
 ::: {#fig-state .ppf-fig}
 ```{mermaid}
+#| label: fig-state
+#| fig-cap: "The state returns: bans travel kernel-ward; verdicts backfill the cache; every step records telemetry; the operator supplies bundles and seeds the maps. Back to [the edge](#fig-kernel)."
 flowchart LR
     subgraph SRC["9–11 · every verdict writes state"]
         S6X["S6 · score breach"]
@@ -186,9 +184,6 @@ flowchart LR
     click ENG "#fig-gateway" "The engine"
 ```
 :::
-
-*The state returns: bans travel kernel-ward; verdicts backfill the cache; every step records telemetry; the operator supplies bundles and seeds the maps. Back to [the edge](#fig-kernel).*
-
 ## Deployment model
 
 ```{mermaid}
