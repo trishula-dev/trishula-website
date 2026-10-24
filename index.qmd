@@ -73,7 +73,7 @@ Each verdict is a correlated OpenTelemetry record (`trishula.verdict.v1`). Dashb
 
 ### The packet path, end to end
 
-Three figures follow one request from the wire to the app pool and back: the journey (figure 1), the ladder walk (figure 2) and the state returns (figure 3).
+Three figures follow one request from the wire to the app pool and back: [figure 1](#fig-journey), [figure 2](#fig-ladder) and [figure 3](#fig-state).
 The canonical records: the [request lifecycle](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#83-request-lifecycle),
 the [ladder semantics](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures), the [two-plane principle](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#91-the-two-plane-principle), the
 [ban algorithm](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) and the [telemetry contract](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#15-opentelemetry-observability).
@@ -90,7 +90,7 @@ the [ladder semantics](https://github.com/trishula-dev/trishula/blob/main/docs/s
 10. A promoted ban lands in the kernel ban table. The next packet pays the kernel price. The engine also back-fills verdicts to the cache.
 11. Every step emits one OTel span. The verdict record carries rule IDs, phase and the score ladder.
 
-::: {.ppf-fig}
+::: {#fig-journey .ppf-fig}
 ```{mermaid}
 flowchart TB
     C["Client (TLS)"]
@@ -123,10 +123,14 @@ flowchart TB
     RET -.->|"backfill"| VC
 
     ENG -->|"5 · reconstruct HTTP/1.1 · h2/gRPC · WS<br/>into the structured request view"| EXIT["Structured request view<br/>→ figure 2"]
+
+    click RET "#fig-state" "Jump to figure 3: the state returns"
+    click EXIT "#fig-ladder" "Jump to figure 2: the ladder walk"
 ```
+*Figure 1 — the journey: the client to the request view. The kernel plane drops, the gateway steers, the engine parses. The dotted node returns state — [figure 3](#fig-state).*
 :::
 
-::: {.ppf-fig}
+::: {#fig-ladder .ppf-fig}
 ```{mermaid}
 flowchart TB
     IN["6 · Walk the ladder — one compiled bundle (figure 1)"]
@@ -157,10 +161,14 @@ flowchart TB
     VN -->|respond| OUTC
     VCh -->|respond| OUTC
     VL -.->|continue| VA
+
+    click IN "#fig-journey" "Back to figure 1: the journey"
+    click OUTC "#fig-journey" "Back to figure 1: the response path"
 ```
+*Figure 2 — the ladder walk: eight checks over one compiled bundle. The first decisive verdict short-circuits the walk. The action order: block · challenge · log · pass ([§2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)).*
 :::
 
-::: {.ppf-fig}
+::: {#fig-state .ppf-fig}
 ```{mermaid}
 flowchart TB
     subgraph SRC["9–11 · Every verdict writes state"]
@@ -182,10 +190,35 @@ flowchart TB
     end
     COMP -->|"hot reload, 5 s budget"| ENGC["Engine (figure 1)"]
     COMP -.->|"map pre-seed"| KB
+
+    click KB "#fig-journey" "The kernel plane (figure 1)"
+    click KC "#fig-journey" "The kernel plane (figure 1)"
+    click ENGC "#fig-journey" "The engine (figure 1)"
 ```
+*Figure 3 — the state returns: bans travel kernel-ward, verdicts backfill the cache, every step records telemetry, and the operator pre-seeds the maps.*
 :::
 
-*Figure 1 — the journey. Figure 2 — the ladder walk (first decisive verdict short-circuits; action order: block · challenge · log · pass). Figure 3 — the state returns. The two altitudes ([§9.1](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#91-the-two-plane-principle)): O(1) kernel decisions per packet; full parsing freedom in the engine.*
+
+
+### The words the figures use
+
+The audience: HTTP, frontend and Kubernetes developers. The kernel words carry plain meaning:
+
+- **XDP** — a packet filter that runs on the network card, before the OS sees the packet.
+- **TC** — the traffic-control hook on a network interface; here: a per-pod packet tap.
+- **LPM ACL** — an IP allow/deny list with prefix matching (the router's longest-prefix-match).
+- **Verdict cache** — a kernel map of known flows. A known flow skips the whole engine.
+- **Ban table** — a kernel map of active temporal bans. A hit drops at line rate.
+- **Ring buffer (ringbuf)** — a kernel-to-userspace event queue; here: flow events to the engine.
+- **The ladder** — the ordered check list the engine walks (S0 to S7).
+- **CRS / Coraza** — the OWASP Core Rule Set, evaluated through the embedded Coraza engine.
+- **CEL** — the Kubernetes-native rule language; the developer's rule surface.
+- **Vectorscan** — the compiled regex accelerator over the hot rule subset.
+- **JA4** — the TLS client fingerprint: who or what holds the connection, despite encryption.
+- **ML scorer** — the in-line model score (ONNX) with an async judge behind it.
+- **ScoredWindowBan** — the named temporary-ban algorithm: scored events in a window, then a kernel-enforced ban.
+
+The spec ([§2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#11-d1-kubernetes-native-the-waf-is-crds-not-config-files)) carries the full vocabulary.
 
 ## Deployment model
 
