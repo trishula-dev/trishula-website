@@ -19,8 +19,11 @@ You want it inside the 15 min M3 gate window. You do not want a hosted cluster o
 
 ### Solution
 
-You need docker, crane, helm, kubectl, go and curl. You need one Docker provider:
-kind, or the OrbStack-provided Kubernetes.
+You need `just` (the entry runner; `brew install just` — `just` alone lists
+the lanes, `bash lab/...` stays equivalent), go, kubectl, helm, crane and
+curl. One target surface: docker OR a reachable Kubernetes — a local kind,
+the OrbStack-provided Kubernetes, or any cluster your kubeconfig points at
+(the prereq gate in lab/prereq.sh prints the target it found).
 
 1. Clone the product repository:
 
