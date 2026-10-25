@@ -1,0 +1,72 @@
+---
+title: "Recipe 6 — Run the ban ladder: ScoredWindowBan shadow, then enforce"
+---
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`lab/demo-attack.sh`](https://github.com/trishula-dev/trishula/blob/main/lab/demo-attack.sh), Linux VM, root, BTF | Enforcement | hard | 20 min | kernel · bans | bans, tc, TC_ACT_SHOT |
+
+### Problem
+
+You want the ban path end to end on a Linux node. You want the scored window as the shadow input. You want one ban row in the kernel map. You want the attacker source dead.
+
+### Solution
+
+1. Build the demo binary. Place the flow object; it ships committed:
+
+```bash
+cp test/tier/tier_probe_arm64_bpfel.o /tmp/flow_tc.o   # arm64; x86: tier_probe_x86_bpfel.o
+go build -o /tmp/attackdemo ./cmd/attackdemo
+```
+
+2. Give the harness an HTTP target for its wire legs. A plain HTTP server on the
+same port answers them:
+
+```bash
+printf '#!/bin/sh\nIP="${1%%:*}"; PORT="${1##*:}"\nexec python3 -m http.server --bind "$IP" "$PORT"\n' > /tmp/tfo
+chmod +x /tmp/tfo
+```
+
+3. Run the demo (root, Linux, kernel 5.15+, BTF present):
+
+```bash
+sudo env DEMO_BIN=/tmp/attackdemo ./lab/demo-attack.sh
+```
+
+4. Read the shadow legs, then the enforcement leg:
+
+```text
+bola:     object=2002 owner=tenant-b subject=tenant-a → BLOCK (API1:2023 BOLA)
+cel:      GET /api/v1/orders/2002 rate=1/5m → match=false cost=3
+ban:      [10.99.0.66] family=4 class=0 tier=1 reason=4211 until=mono+120s
+wire:    replay result: <timeout or refused> (the kernel answered, not the app)
+```
+
+### Discussion
+
+The demo drives three decision inputs and one enforcement leg. The CRS payload
+prints the S2 negative-security verdicts. The BOLA case prints the S3
+positive-security record. The `cel` leg prints the S3 rate rule over the same
+view — the scoring input the ban ladder reads. The `ban` leg seeds one source ban through the loader ABI. A `BanVal` carries tier, reason code and a monotonic deadline. The value lands in the kernel map. The replay through the same flow dies in
+TC before userspace (`TC_ACT_SHOT`).
+
+The thresholds and tiers live in [spec §13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified).
+This recipe drives the enforcement leg and the map evidence; the full decider
+census reads in the same section.
+
+### See also
+
+- [spec §13](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#13-rate-limiting-dos-response--temporary-bans) — rate limits, DoS, bans. [spec §13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) — ScoredWindowBan.
+- [`docs/demo.md`](https://github.com/trishula-dev/trishula/blob/main/docs/demo.md) — the demo's honesty table.
+- [Issue #83](https://github.com/trishula-dev/trishula/issues/83) — the recorded attack-demo transcripts.
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, inside the sprint Linux VM (kernel `7.0.14-orbstack-00380`, bpftool v7.4.0):
+
+- The demo ran exit 0 at the pin. The program loaded and attached on the veth pair; the four maps pinned.
+- The ban row landed in the map (`family=4 class=0 tier=1 reason=4211`). The replay after the ban
+  read the kernel answer, not the app.

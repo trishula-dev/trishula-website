@@ -1,12 +1,6 @@
 ---
-title: "Recipes — Release and supply chain"
+title: "Recipe 12 — Verify a release: the SLSA provenance check before you deploy"
 ---
-
-The full ramp and the recipe form live on the [recipes index](recipes.html). This page carries the worked recipes for this category.
-
-In this category: Recipe 12.
-
-## Recipe 12 — Verify a release: the SLSA provenance check before you deploy {#recipe-12}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|

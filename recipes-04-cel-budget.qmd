@@ -1,0 +1,79 @@
+---
+title: "Recipe 4 — Write a CEL rule at S3 with a cost budget"
+---
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`cmd/trishula`](https://github.com/trishula-dev/trishula/tree/main/cmd/trishula) + a rule pack file, any host with Go | Policy | medium | 10 min | engine · cel | cel, cost budget |
+
+### Problem
+
+You want one CEL rule at the S3 slot. You want a hard cost ceiling on it.
+You want proof the ceiling bites, at evaluation and at compile.
+
+### Solution
+
+1. Copy the seed pack to a work file. Declare a budget below the rule's real cost
+(the seed rule evaluates at cost 3):
+
+```yaml
+rules:
+  - id: R4-BUDGET
+    name: rate-shape-budget-bite
+    description: 'The seed rate rule under a 2-cost ceiling'
+    action: log
+    costBudget: 2
+    expression: |
+      request.method == "POST" &&
+      path.matches("/v1/chat/*") &&
+      request.rate_windows["5m"].requests > 40
+```
+
+2. Run the pack. The ceiling stops every evaluation:
+
+```bash
+go run ./cmd/trishula --selftest --rules <pack-path>.yaml
+```
+
+```text
+case below-threshold-no-match             match=false error=true  cost=3     FAIL detail=operation cancelled: actual cost limit exceeded
+exit status 1
+```
+
+3. Check the compile side. The bundle load refuses an unusable declared budget
+(the fail-closed gate):
+
+```bash
+go test ./internal/operator -run TestLoadRejectsUnusableDeclaredBudget -count=1
+```
+
+```text
+ok   github.com/trishula-dev/trishula/internal/operator  <seconds>s
+```
+
+### Discussion
+
+The budget rides the pack wire: `costBudget` sits on the rule. The policy's
+`celBudget` is the fallback ceiling. Rule budget wins. A budget change re-plans
+the program; it never re-compiles the module. The refusal detail names the
+ceiling: `actual cost limit exceeded`. The compile-side gate rejects a pack whose
+rule cannot run under its declared budget. No bundle ships on refusal.
+
+The rule rides the S3 slot: the same rate rule the parity walk prints at S3.
+
+### See also
+
+- [spec §11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl) — the CEL DSL. [spec §8.1](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#81-design-principles) — the cost-budget principle.
+- [The seed pack](https://github.com/trishula-dev/trishula/blob/main/rules/cel/seed.yaml) — the rule form.
+- [TR-17 issue #17](https://github.com/trishula-dev/trishula/issues/17) — hot reload + cost budgets.
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, on the host clone:
+
+- `go run ./cmd/trishula --selftest --rules <pack-budget-2>.yaml`: exit 1. Every case read
+  `error=true cost=3` with `detail=operation cancelled: actual cost limit exceeded`.
+- `go test ./internal/operator -run TestLoadRejectsUnusableDeclaredBudget -count=1`: ok.

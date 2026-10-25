@@ -1,0 +1,116 @@
+---
+title: "Recipe 11 — Enable bot detection and the challenge: the consensus verdict, the redirect, the proof"
+---
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`internal/engine/botdef/`](https://github.com/trishula-dev/trishula/tree/main/internal/engine/botdef) · [`cmd/engine/`](https://github.com/trishula-dev/trishula/tree/main/cmd/engine) | Enforcement | medium | 10 min | policy + engine | bot, challenge, TR-197 |
+
+### Problem
+
+A credential-stuffing bot spreads login attempts across one source: no single
+request carries a bad string. You want one response for it: a wall that costs
+the client work, not a permanent ban. You want evidence of what answered.
+
+### Solution
+
+Two surfaces ship the flow: the detector consensus resolves `challenge`
+(two distinct families at or above the confidence floor), and the engine
+answers with a signed redirect that costs one small hash probe.
+
+1. Generate the signing key and start the engine with it. No key = the
+   challenge verdict refuses (the gate never pretends to challenge):
+
+```bash
+CHALLENGE_KEY=$(openssl rand -hex 32)
+./engine --upstream http://app:8080 \
+         --bundle /etc/trishula/bundle.json \
+         --challenge-key "$CHALLENGE_KEY" -listen :8080
+```
+
+2. Point the policy at the wall. The CRD carries the action today:
+   `defaultAction: challenge`, or the bot consensus resolves it when two
+   detector families agree per source:
+
+```yaml
+spec:
+  defaultAction: challenge
+```
+
+3. Probe. The consensus verdict answers `429` with the redirect:
+
+```bash
+curl -s -i "http://<gateway>/v1/chat/completions"
+```
+
+```text
+HTTP/1.1 429 Too Many Requests
+Location: /__trishula/challenge?token=<payload>.<hmac>
+X-Trishula-Decision: challenge
+```
+
+4. Read the problem. The hop prints the signed probe: the salt, the
+   difficulty, the problem token. Nothing is consumed by reading it:
+
+```bash
+curl -s "http://<gateway>/__trishula/challenge?token=<tok>"
+```
+
+```text
+problem-token=<tok>
+salt=<hex>
+diff=16
+```
+
+5. Solve. The nonce whose `sha256(salt:nonce)` starts with 16 zero bits
+   is the answer; ~65k hashes, under a second on a laptop. The solve
+   consumes both tokens once and grants the pass cookie:
+
+```text
+challenge verified; retry the original request
+Set-Cookie: trishula_pass=<token>; HttpOnly; Max-Age=600
+```
+
+6. Retry the original request with the cookie. The consult reads the
+   grant back and forwards the request for the cookie's TTL. A client
+   that never solves stays on the wall: every attempt re-answers `429`.
+
+### Discussion
+
+The token = the payload + the HMAC-SHA256 over it. The expiry lives in
+the payload (a 10-minute TTL); a nonce marks one-shot use: a consumed
+token refuses the second solve. A tampered payload, a dropped byte or a
+wrong key refuses with the named reason in the hop's log. A past-expiry
+token refuses identically — the exit criterion "the replay beyond the
+TTL refuses" holds two ways.
+
+Fail-open stays off here on purpose: a challenge that cannot mint is a
+deterministic `403`, never a silent pass. The proof probe stays small by
+default (16 bits); the difficulty is a constant in
+[`internal/engine/challenge/eow.go`](https://github.com/trishula-dev/trishula/blob/main/internal/engine/challenge/eow.go)
+until the CRD knob ships.
+
+### See also
+
+- [spec §12.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#122-verdict-integration) — the challenge verdict in the ladder.
+- [spec §13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — where the challenge sits beside the ban path.
+- [Issue #239](https://github.com/trishula-dev/trishula/issues/239) — the stream. [PR #256](https://github.com/trishula-dev/trishula/pull/256) · [PR #258](https://github.com/trishula-dev/trishula/pull/258) — the leaves.
+- [Recipe 9 — the manual `action: ban` for the confirmed offender.](recipes-09-manual-ban.html)
+
+### Provenance
+
+Verified against [trishula@97206190](https://github.com/trishula-dev/trishula/commit/97206190ed003e5eea8d62aeb750e42545f99c83)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25:
+
+- `go test ./internal/engine/challenge/`: the mint/verify round trip, the
+  expiry, the tamper and the wrong key, the one-shot replay, the peek
+  non-consumption, the work-growth pin.
+- `go test ./cmd/engine/ -run TestChallenge`: the 429 + the redirect, the
+  verified hop, the tampered hop, the no-key refusal.
+- `go test ./cmd/engine/ -run TestEvidenceOfWork`: the full flow — the
+  problem, the wrong answer, the solve, the pass cookie, the forwarded
+  retry, the un-solved retry bouncing.
+- CI: run [40172145425](https://github.com/trishula-dev/trishula/actions/runs/40172145425)
+  green on [PR #258](https://github.com/trishula-dev/trishula/pull/258).

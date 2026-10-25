@@ -9,18 +9,20 @@ Recipes 3 to 12 carry the advanced lanes: verdicts, budgets, exclusions, bans, k
 
 ## The categories
 
-| Page | Recipes | Covers |
-|---|---|---|
-| [Getting started](recipes-getting-started.html) | 1, 2, 3 | the install, the first policy CR, the verdict records |
-| [Policy and rules](recipes-policy.html) | 4, 9, 11 | the CEL budgets, the manual ban rule, the bot challenge |
-| [Kernel enforcement](recipes-kernel.html) | 6, 7, 10 | the ban ladder, the kernel map seed, the shield DoS runner |
-| [CRS and the bench](recipes-crs-bench.html) | 5, 8 | the exclusion tuning, the differential + the bench |
-| [Release and supply chain](recipes-release.html) | 12 | the SLSA provenance verify |
+The sidebar carries the five folders; every recipe = one page.
+
+| Folder | Recipes |
+|---|---|
+| Getting started | 1, 2, 3 |
+| Policy and rules | 4, 9, 11 |
+| Kernel enforcement | 6, 7, 10 |
+| CRS and the bench | 5, 8 |
+| Release and supply chain | 12 |
 
 
 ## The recipe ramp
 
-The table lists the planned ramp. Simple tasks sit first. Advanced tasks sit last. The recipes sit under their [category pages](#the-categories).
+The table lists the planned ramp. Simple tasks sit first. Advanced tasks sit last. Every recipe = one page; the categories = the sidebar folders.
 A planned recipe stays PENDING until a worked pin and a smoke run exist.
 
 | # | Recipe | Level | Feeds from |
@@ -38,6 +40,17 @@ A planned recipe stays PENDING until a worked pin and a smoke run exist.
 | 11 | Enable bot detection and the challenge: the consensus verdict, the redirect, the proof | medium | [§12.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#122-verdict-integration), [§13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) |
 | 12 | Verify a release: the SLSA provenance check before you deploy | easy | [SECURITY.md](https://github.com/trishula-dev/trishula/blob/main/SECURITY.md), the attest chain (TR-81) |
 
+## The categories
+
+| Recipes | Page |
+|---|---|
+| 1, 2, 3 | the Getting started folder |
+| 4, 9, 11 | the Policy and rules folder |
+| 6, 7, 10 | the Kernel enforcement folder |
+| 5, 8 | the CRS and the bench folder |
+| 12 | the Release and supply chain folder |
+
+The folders live in the sidebar (the page tree under the navbar).
 
 ## The recipe form
 
