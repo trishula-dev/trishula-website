@@ -2,14 +2,14 @@
 title: "Building Trishula"
 ---
 
-Trishula is built and verified with a small, reproducible toolchain. The kernel-side eBPF sources compile CO-RE on a Linux kernel inside a virtual machine. The userspace Go services follow a test-first engineering standard. Every claim traces to a merge-verified pull request.
+Trishula is built and verified with a small, reproducible toolchain. `just` is the entry runner: `just` alone lists every build and lab lane; the procedures stay in the scripts. The kernel-side eBPF sources compile CO-RE on a Linux kernel inside a virtual machine. The userspace Go services follow a test-first engineering standard. Every claim traces to a merge-verified pull request.
 This page documents that loop — the same loop that produces the evidence records cited across the [roadmap](roadmap.html).
 
 ## The build environment
 
 | Layer | Component | Role |
 |---|---|---|
-| Workstation | macOS (Apple silicon) | Editing, CI, site/publishing, artifact generation |
+| Entry runner | [`just`](https://github.com/casey/just) | the task registry: `just` lists every lane; one recipe = one delegate to a script |
 | Test target | **Linux VM on the workstation** (Ubuntu 24.04, arm64) | The actual eBPF test kernel: verifier, BTF, TC/XDP attach, netns/veth harnesses |
 | Kernel toolchain | `clang -target bpf` + `bpftool` | CO-RE compile + `vmlinux.h` generation from the VM kernel's own BTF |
 | Object generation | [`bpf2go`](https://github.com/cilium/ebpf) | Generated Go bindings + per-target objects, committed — a tagged release ships byte-identical objects ([the hook inventory](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#92-hook-inventory)) |
@@ -56,6 +56,13 @@ Two gates run before kernel-side work merges:
 - **`lab/verify-xdp-chain.sh`** — proves the test host end to end. The proof: BTF present; `vmlinux.h` dumped from the live kernel; a CO-RE probe compiled, verifier-loaded, pinned; XDP attached; clean detach. Exit 0 is pasted into the PR.
 - **In-VM E2E tags** — kernel-attach tests run behind build tags (`ingest4d`, `attach`) and are root-gated: CI runs the portable suites; the VM runs the kernel suite.
 
+## What is built, what is needed (the GA view)
+
+The build surface as of 2026-10-25:
+
+- **Built and verified:** the entry surface (`justfile` + `lab/prereq.sh`); the CI gates (the build/vet/test with the CRS rx profile, the cue goldens, the route verifier load, the residue teardown, the fastpath diff); the attestation chain per release (the SLSA provenance + the SPDX SBOM, Rekor-backed); the in-VM E2E families (the ban enforce, the ring, the DoS runner — root-gated build tags).
+- **Needed before GA:** the release notes carry the consumer `gh attestation verify` block (the cut recipe requires it); the registry leg for the remote clusters (the lab images on EKS/DOKS = push + pull, #261's follow-up); the NGF 2.x dataplane agent on OrbStack (#259's probe matrix — P1 the process-visibility shim, P2 the agent config surface). The 2026.02/03 trains carry the QUIC/kTLS/DPU lanes. The [upstream drafts](https://github.com/trishula-dev/trishula/issues/97) stay parked — nothing files upstream.
+
 ## Engineering records
 
 Work is tracked as issues ([TR-01 …](https://github.com/trishula-dev/trishula/issues)) on the [roadmap board](https://github.com/orgs/trishula-dev/projects/1). Large items are sliced into sub-issues (~1 hour each) with native blocked-by edges. The board shows the dependency order.
@@ -63,17 +70,22 @@ Kernel-quirk discoveries are filed as defects ([#80](https://github.com/trishula
 
 ## The DX1 lab quickstart — one command from clone to the full demo
 
-From [TR-14](https://github.com/trishula-dev/trishula/pull/108) on, the whole exit-gate demo is one command. The host: a Docker provider (kind, or OrbStack-provided Kubernetes) with `go`, `kubectl`, `helm`, `docker`, `curl`:
+From [TR-14](https://github.com/trishula-dev/trishula/pull/108) on, the whole exit-gate demo is one command. The prereqs = two layers ([issue #261](https://github.com/trishula-dev/trishula/issues/261)):
+
+1. `just` — the entry runner (brew install just; `just` alone lists the lanes).
+2. **docker OR kubernetes** — lab/prereq.sh detects the target and prints what it found: a local kind or OrbStack, a hypervisor VM's node, or a cloud Kubernetes (EKS, DOKS) — point your kubeconfig at it and run.
 
 ```bash
 git clone https://github.com/trishula-dev/trishula && cd trishula
-bash lab/demo.sh   # ~3 stages, each pass/fail loudly; ends on the hop evidence
+just demo        # ~3 stages, each pass/fail loudly; ends on the hop evidence
 ```
 
-The stages it composes (each script also runs standalone):
+The direct form (`bash lab/demo.sh`) stays equivalent. The lab needs `go`, `kubectl`, `helm` and one of the two target surfaces. A remote cluster needs its own registry for the lab images (the follow-up leaf on #261); the local targets load the images directly.
+
+The stages it composes (each also = a `just` recipe):
 
 ```bash
-bash lab/dx1/setup.sh         # stage 1 — cluster + NGF + engine + echo (idempotent)
+just setup                    # stage 1 — cluster + NGF + engine + echo (idempotent)
 bash lab/dx1/apply-effect.sh  # stage 2 — WAFPolicy apply → operator compile →
                               #           engine hot-reload → 403 on traffic, timed (M9 ≤ 5 s)
 bash lab/dx1/verify.sh        # stage 3 — hop evidence (NGF → engine → echo), printed LAST
@@ -94,7 +106,9 @@ The stage-3 hop transcript (`X-Trishula-Hop: engine`, echo pod body, engine-loca
 
 ```bash
 git clone https://github.com/trishula-dev/trishula && cd trishula
-go build ./... && go test ./...          # portable suites (any OS)
+just build && just vet                   # the portable lanes
+just test                                # the full suite (the CI shape)
+go build ./... && go test ./...          # the direct form (any OS)
 # kernel suites need Linux (root):
 sudo go test -tags attach -run TestBanDropE2E ./internal/shield/ -v
 sudo go test -tags ingest4d -run TestFlowTCRingE2E ./internal/engine/ingest/ -v
