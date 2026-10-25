@@ -15,7 +15,7 @@ This page documents that loop — the same loop that produces the evidence recor
 | Object generation | [`bpf2go`](https://github.com/cilium/ebpf) | Generated Go bindings + per-target objects, committed — a tagged release ships byte-identical objects ([the hook inventory](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#92-hook-inventory)) |
 | Loader | [`cilium/ebpf`](https://github.com/cilium/ebpf) | Load/pin/attach from Go; no C loader on the host |
 
-The VM is the test kernel because **eBPF is kernel work**: XDP/TC programs, maps, BTF and the verifier exist only on Linux. The workstation orchestrates; the VM verifies. kind (Kubernetes-in-the-VM) extends the same pattern to the cluster-level labs ([TR-06](https://github.com/trishula-dev/trishula/issues/6)).
+The VM is the test kernel: **eBPF is kernel work**. XDP/TC programs, maps, BTF and the verifier exist only on Linux. The workstation orchestrates; the VM verifies. kind (Kubernetes-in-the-VM) extends the same pattern to the cluster-level labs ([TR-06](https://github.com/trishula-dev/trishula/issues/6)).
 
 ## Verification standard
 
@@ -25,7 +25,7 @@ Every build item follows a hypothesis-first test-driven loop (the [engineering s
 2. **RED** — the failing test is written first and committed watched-failing. A kernel-side contract is frozen by test *before* the C implementation lands. The frozen facts: map names, types, sizes, wire layouts, action codes.
 3. **GREEN** — the minimal implementation makes the test pass; nothing more.
 4. **PR** — branch per change, GPG-signed commits, CI gates (build + vet + test, dependency review, pre-commit). Every PR carries the hypothesis and the RED/GREEN evidence in the body.
-5. **Close on acceptance** — an issue closes only when its own acceptance line is verified against the tree (run the check, paste the evidence).
+5. **Close on acceptance** — an issue closes only when its own acceptance line is verified against the tree. The verification: run the check, paste the evidence.
 
 This produces the property that matters: every roadmap artifact is **proved by a runnable check**, not asserted by prose.
 
@@ -47,21 +47,21 @@ A real example — the shield PoC ([TR-03](https://github.com/trishula-dev/trish
                               gate every kernel-side PR pastes as evidence
 ```
 
-Facts the loop surfaced (and the tests now pin): the ring event is 200 bytes (C natural alignment), TCP ports travel network-order, the L7 payload offset follows `tcp->doff`, and payload bytes can sit in paged fragments — linear-only reads never see them, so the peek uses `bpf_skb_load_bytes`. Each was caught by a test during the build and recorded in the PR trail.
+Facts the loop surfaced (and the tests now pin): the ring event is 200 bytes (C natural alignment). TCP ports travel network-order. The L7 payload offset follows `tcp->doff`. Payload bytes can sit in paged fragments; linear-only reads never see them. The peek uses `bpf_skb_load_bytes`. Each was caught by a test during the build and recorded in the PR trail.
 
 ## Environment gates
 
 Two gates run before kernel-side work merges:
 
 - **`lab/verify-xdp-chain.sh`** — proves the test host end to end. The proof: BTF present; `vmlinux.h` dumped from the live kernel; a CO-RE probe compiled, verifier-loaded, pinned; XDP attached; clean detach. Exit 0 is pasted into the PR.
-- **In-VM E2E tags** — kernel-attach tests run behind build tags (`ingest4d`, `attach`) and are root-gated: CI runs the portable suites; the VM runs the kernel suite.
+- **In-VM E2E tags** — kernel-attach tests run behind build tags (`ingest4d`, `attach`) and are root-gated. The split: CI runs the portable suites; the VM runs the kernel suite.
 
 ## What is built, what is needed (the GA view)
 
 The build surface as of 2026-10-25:
 
-- **Built and verified:** the entry surface (`justfile` + `lab/prereq.sh`); the CI gates (the build/vet/test with the CRS rx profile, the cue goldens, the route verifier load, the residue teardown, the fastpath diff); the attestation chain per release (the SLSA provenance + the SPDX SBOM, Rekor-backed); the in-VM E2E families (the ban enforce, the ring, the DoS runner — root-gated build tags).
-- **Needed before GA:** the release notes carry the consumer `gh attestation verify` block (the cut recipe requires it); the registry leg for the remote clusters (the lab images on EKS/DOKS = push + pull, #261's follow-up); the NGF 2.x dataplane agent on OrbStack (#259's probe matrix — P1 the process-visibility shim, P2 the agent config surface); [TR-203](https://github.com/trishula-dev/trishula/issues/264) — the TLS-termination lane in this cut (the QUIC/H3 ingress, the eBPF UDP class, the PQC key exchange, the JA4 impact). The 2026.02/03 trains carry the PQC signature migration, kTLS and the DPU lanes; re-encryption = the named post-GA boundary. The [upstream drafts](https://github.com/trishula-dev/trishula/issues/97) stay parked — nothing files upstream.
+- **Built and verified:** the entry surface (`justfile` + `lab/prereq.sh`). The CI gates run: the build/vet/test with the CRS rx profile, the cue goldens and the route verifier load. The gates also check the residue teardown and the fastpath diff. The attestation chain ships per release: the SLSA provenance + the SPDX SBOM, Rekor-backed. The in-VM E2E families: the ban enforce, the ring, the DoS runner (root-gated build tags).
+- **Needed before GA:** the release notes carry the consumer `gh attestation verify` block; the cut recipe requires it. The registry leg for the remote clusters: the lab images on EKS/DOKS = push + pull, #261's follow-up. The NGF 2.x dataplane agent on OrbStack: #259's probe matrix = P1 the process-visibility shim, P2 the agent config surface. [TR-203](https://github.com/trishula-dev/trishula/issues/264) = the TLS-termination lane in this cut. The lane covers the QUIC/H3 ingress, the eBPF UDP class, the PQC key exchange and the JA4 impact. The 2026.02/03 trains carry the PQC signature migration, kTLS and the DPU lanes; re-encryption = the named post-GA boundary. The [upstream drafts](https://github.com/trishula-dev/trishula/issues/97) stay parked — nothing files upstream.
 
 ## Engineering records
 
@@ -73,14 +73,14 @@ Kernel-quirk discoveries are filed as defects ([#80](https://github.com/trishula
 From [TR-14](https://github.com/trishula-dev/trishula/pull/108) on, the whole exit-gate demo is one command. The prereqs = two layers ([issue #261](https://github.com/trishula-dev/trishula/issues/261)):
 
 1. `just` — the entry runner (brew install just; `just` alone lists the lanes).
-2. **docker OR kubernetes** — lab/prereq.sh detects the target and prints what it found: a local kind or OrbStack, a hypervisor VM's node, or a cloud Kubernetes (EKS, DOKS) — point your kubeconfig at it and run.
+2. **docker OR kubernetes** — lab/prereq.sh detects the target and prints what it found. The target: a local kind or OrbStack, a hypervisor VM's node or a cloud Kubernetes (EKS, DOKS). Point your kubeconfig at it and run.
 
 ```bash
 git clone https://github.com/trishula-dev/trishula && cd trishula
 just demo        # ~3 stages, each pass/fail loudly; ends on the hop evidence
 ```
 
-The direct form (`bash lab/demo.sh`) stays equivalent. The lab needs `go`, `kubectl`, `helm` and one of the two target surfaces. A remote cluster needs its own registry for the lab images (the follow-up leaf on #261); the local targets load the images directly.
+The direct form (`bash lab/demo.sh`) stays equivalent. The lab needs `go`, `kubectl`, `helm` and one of the two target surfaces. A remote cluster needs its own registry for the lab images (the follow-up leaf on #261). The local targets load the images directly.
 
 The stages it composes (each also = a `just` recipe):
 
@@ -100,7 +100,7 @@ Verify the composition yourself — the demo's stage markers, from the recorded 
 == DEMO-OK — lab/demo.sh complete: setup + M9 apply→effect + hop evidence all PASS (lab left running, no teardown)
 ```
 
-The stage-3 hop transcript (`X-Trishula-Hop: engine`, echo pod body, engine-local `/healthz`) is the demo's closing evidence — recorded verbatim in the repo [README "Proof" section](https://github.com/trishula-dev/trishula#readme) and on [#6](https://github.com/trishula-dev/trishula/issues/6#issuecomment-6091479891).
+The stage-3 hop transcript (`X-Trishula-Hop: engine`, echo pod body, engine-local `/healthz`) is the demo's closing evidence. The transcript sits verbatim in the repo [README "Proof" section](https://github.com/trishula-dev/trishula#readme) and on [#6](https://github.com/trishula-dev/trishula/issues/6#issuecomment-6091479891).
 
 ## Reproduce it locally
 

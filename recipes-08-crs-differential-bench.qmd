@@ -9,7 +9,7 @@ title: "Recipe 8 — Run the CRS differential and the bench harness on your own 
 ### Problem
 
 You want the full suite under the CI shape on the node you own. You want the
-verdict walls measured against the [spec §17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan)
+verdict walls measured against the [spec 17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan)
 budgets, and the CRS posture re-checked on the same node.
 
 ### Solution
@@ -55,7 +55,7 @@ the same tree: run it again after any rule or exclusion change.
 
 ### See also
 
-- [spec §17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan) — the budgets and the benchmark plan. [spec §11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate) — the parity gate.
+- [spec 17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan) — the budgets and the benchmark plan. [spec 11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate) — the parity gate.
 - [The lab bench recipe](https://github.com/trishula-dev/trishula/blob/main/lab/README.md) — the lab surfaces.
 - [TR-24 issue #24](https://github.com/trishula-dev/trishula/issues/24) — the bench harness lane.
 - [Recipe 5 — the same parity gate with the exclusion probes.](recipes-05-crs-exclusions.html)
@@ -68,6 +68,9 @@ on main, 2026-10-25.
 Smoke run, 2026-10-25, inside the sprint Linux VM:
 
 - The parity gate read green before the rig.
-- `bash lab/bench-vm.sh` ran the four sections inside the VM. The section I wall read
-  `MEASURED attack-sqli-small n=300 size=17 B p50=427.3 us p99=571.5 us budget=e2e-inline-hop-8k (1500 us) factor=0.38x`
-  against the `e2e-inline-hop-8k` budget.
+- `bash lab/bench-vm.sh` ran the four sections inside the VM. The section I wall
+  read the line below against the `e2e-inline-hop-8k` budget:
+
+  ```text
+  MEASURED attack-sqli-small n=300 size=17 B p50=427.3 us p99=571.5 us budget=e2e-inline-hop-8k (1500 us) factor=0.38x
+  ```

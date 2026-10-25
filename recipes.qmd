@@ -5,7 +5,7 @@ title: "Recipes"
 Recipes are short task pages. Each recipe solves one task. Each recipe ends with a check you can run.
 The recipes rise in difficulty. Recipe 1 installs Trishula on a local Docker provider and reads the first verdict.
 Recipe 2 applies a WAFPolicy and reads the verdict line.
-Recipes 3 to 12 carry the advanced lanes: verdicts, budgets, exclusions, bans, kernel maps, the bench, the manual ban rule, the shield runner, the challenge and the release verification.
+Recipes 3 to 12 carry the advanced lanes: verdicts, budgets, exclusions, bans, kernel maps and the bench. The later lanes carry the manual ban rule, the shield runner, the challenge and the release verification.
 
 ## The categories
 

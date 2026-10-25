@@ -13,11 +13,12 @@ You want it inside the 15 min M3 gate window. You do not want a hosted cluster o
 
 ### Solution
 
-You need `just` (the entry runner; `brew install just` — `just` alone lists
-the lanes, `bash lab/...` stays equivalent), go, kubectl, helm, crane and
-curl. One target surface: docker OR a reachable Kubernetes — a local kind,
-the OrbStack-provided Kubernetes, or any cluster your kubeconfig points at
-(the prereq gate in lab/prereq.sh prints the target it found).
+You need `just`, go, kubectl, helm, crane and curl. `just` = the entry
+runner. `brew install just` installs it. `just` alone lists the lanes.
+`bash lab/...` stays equivalent. One target surface: docker OR a reachable
+Kubernetes. Pick a local kind, the OrbStack-provided Kubernetes or any
+cluster your kubeconfig points at. The prereq gate in lab/prereq.sh
+prints the target it found.
 
 1. Clone the product repository:
 
@@ -87,7 +88,7 @@ On OrbStack-provider Kubernetes, the NGF 2.x dataplane does not register.
 ### See also
 
 - [The DX1 lab README](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/README.md) — the three steps and the knobs.
-- [spec §10.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#102-the-contract-trishula-as-a-gateway-api-citizen) — the Gateway API contract. [spec §10.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#103-the-reference-walkthrough-the-lab-every-claim-is-proven-in) — the reference walkthrough.
+- [spec 10.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#102-the-contract-trishula-as-a-gateway-api-citizen) — the Gateway API contract. [spec 10.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#103-the-reference-walkthrough-the-lab-every-claim-is-proven-in) — the reference walkthrough.
 - [The Build page](building.html) — the same loop inside the site's verification story.
 - [DX1 issue #6](https://github.com/trishula-dev/trishula/issues/6) · [TR-08c issue #76](https://github.com/trishula-dev/trishula/issues/76).
 

@@ -93,7 +93,7 @@ A bad CR keeps the last good decisions. That is the fail-closed posture.
 
 ### See also
 
-- [spec §11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl) — the CEL rule surface.
+- [spec 11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl) — the CEL rule surface.
 - [The WAFPolicy CRD](https://github.com/trishula-dev/trishula/blob/main/manifests/crd/wafpolicy-crd.yaml) · [The lab policy](https://github.com/trishula-dev/trishula/blob/main/deployment/dx1/manifests/dx1-wafpolicy.yaml) · [The rule pack](https://github.com/trishula-dev/trishula/blob/main/deployment/dx1/manifests/dx1-rulepack-sqli.yaml).
 - [TR-08c issue #76](https://github.com/trishula-dev/trishula/issues/76) — the apply→effect gate.
 - [The DX1 lab README](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/README.md) — the three steps and the knobs.

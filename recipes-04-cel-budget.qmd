@@ -63,7 +63,7 @@ The rule rides the S3 slot: the same rate rule the parity walk prints at S3.
 
 ### See also
 
-- [spec §11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl) — the CEL DSL. [spec §8.1](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#81-design-principles) — the cost-budget principle.
+- [spec 11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl) — the CEL DSL. [spec 8.1](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#81-design-principles) — the cost-budget principle.
 - [The seed pack](https://github.com/trishula-dev/trishula/blob/main/rules/cel/seed.yaml) — the rule form.
 - [TR-17 issue #17](https://github.com/trishula-dev/trishula/issues/17) — hot reload + cost budgets.
 
