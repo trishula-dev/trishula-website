@@ -5,7 +5,7 @@ title: "Recipes"
 Recipes are short task pages. Each recipe solves one task. Each recipe ends with a check you can run.
 The recipes rise in difficulty. Recipe 1 installs Trishula on a local Docker provider and reads the first verdict.
 Recipe 2 applies a WAFPolicy and reads the verdict line.
-Recipes 3 to 8 carry the advanced lanes: verdicts, budgets, exclusions, bans, kernel maps, the bench.
+Recipes 3 to 10 carry the advanced lanes: verdicts, budgets, exclusions, bans, kernel maps, the bench, the manual ban rule and the shield runner.
 
 ## The recipe ramp
 
@@ -22,6 +22,8 @@ A planned recipe stays PENDING until a worked pin and a smoke run exist.
 | 6 | Run the ban ladder: ScoredWindowBan shadow, then enforce | hard | [§13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) |
 | 7 | Pre-seed the kernel maps from the operator bundle | hard | [§16.4](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#164-lifecycle-of-trishula-in-a-cluster), the seed pack |
 | 8 | Run the CRS differential and the bench harness on your own node | hard | [§11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate), [§17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan) |
+| 9 | Ban an offender manually: a CEL rule with `action: ban` | medium | [§13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what), [§13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) |
+| 10 | Watch the dynamic DoS signature: the shield runner end to end | hard | [§13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what), [§9.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#93-maps-and-state) |
 
 ## The recipe form
 
@@ -660,3 +662,211 @@ Smoke run, 2026-10-25, inside the sprint Linux VM:
 - `bash lab/bench-vm.sh` ran the four sections inside the VM. The section I wall read
   `MEASURED attack-sqli-small n=300 size=17 B p50=427.3 us p99=571.5 us budget=e2e-inline-hop-8k (1500 us) factor=0.38x`
   against the `e2e-inline-hop-8k` budget.
+
+## Recipe 9 — Ban an offender manually: a CEL rule with `action: ban`
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`cmd/engine/`](https://github.com/trishula-dev/trishula/tree/main/cmd/engine) · [`internal/operator/`](https://github.com/trishula-dev/trishula/tree/main/internal/operator) | Enforcement | medium | 5 min | policy + engine | ban, CEL, WAFPolicy, TR-195 |
+
+### Problem
+
+You watched one source hammer a route. You want to stop that source now.
+You do not want to wait for a score. You want the stop to leave evidence
+and to name the rule that wrote it.
+
+### Solution
+
+A rule pack carries one rule with `action: ban`. The matcher can say one
+word: the path. The source stays on the wall as a would-ban record.
+
+1. Write the rule pack. The action is `ban`; the match is narrow:
+
+```yaml
+rules:
+  - id: OPS-MANUAL-01
+    name: manual-ban
+    description: stop the offender on the login route
+    action: ban
+    expression: |
+      request.method == "POST" && path.matches("/v1/chat/*")
+```
+
+2. Ship it the way every rule ships: the ConfigMap + the `WAFPolicy` CR
+   that points at the pack (Recipe 2 owns that surface). Compile and apply.
+   The gate compiles the pack; the CRD carries the bundle.
+
+```bash
+kubectl -n trishula apply -f rulepack-manual-ban.yaml
+kubectl -n trishula apply -f wafpolicy-with-ban.yaml
+```
+
+3. Probe the route from the offender source. The response carries the
+   decision, the rule id and the body:
+
+```bash
+curl -s -i -X POST "http://<gateway>/v1/chat/completions?q=x"
+```
+
+```text
+HTTP/1.1 403 Forbidden
+X-Trishula-Decision: ban
+X-Trishula-Hop: engine
+X-Trishula-Rule: OPS-MANUAL-01
+
+banned by OPS-MANUAL-01
+```
+
+4. Read the ban evidence. Start the engine with `--ban-evidence`, then
+   read the JSONL line the match wrote:
+
+```bash
+kubectl -n trishula logs deploy/trishula-engine | tail -3
+```
+
+```text
+would-ban 192.0.2.10 tier=manual-rule score=0 sig={Class:manual-rule Paths:[/v1/chat/completions]}
+```
+
+5. Lift the ban. Remove the rule from the pack and re-apply. The next
+   bundle no longer names the rule, so the match disappears. The scored
+   window for that source decays on its own clock.
+
+### Discussion
+
+`action: ban` folds with the response ladder as a block class on the
+inside and a direct would-ban out the back. The record carries the
+`manual-rule` tier and the signature (`class`, `paths`). The same record
+reaches the enforcer the scored path uses; a deployed enforcer publishes
+the kernel row the same way. The verdict signals name the rule: the
+consult-signal test in [#252](https://github.com/trishula-dev/trishula/pull/252)
+pins `verdict.action=ban`, `verdict.rules=OPS-MANUAL-01` and
+`verdict.dos.sig`.
+
+Keep the match narrow. `action: ban` never waits for a score; a wide
+expression bans whole routes. The fail-open posture: a failed evidence
+write stays logged; the block decision stands.
+
+### See also
+
+- [spec §13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — the manual and the automatic paths.
+- [spec §13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) — the scored path the record shares.
+- [Issue #237](https://github.com/trishula-dev/trishula/issues/237) — the DoS/ban stream. [PR #248](https://github.com/trishula-dev/trishula/pull/248) — the ban surface. [PR #252](https://github.com/trishula-dev/trishula/pull/252) — the signals.
+- Recipe 6 above — the scored ban ladder.
+- Recipe 10 below — the signature the record carries.
+
+### Provenance
+
+Verified against [trishula@798beb1](https://github.com/trishula-dev/trishula/commit/aac9da071568c1eed4977cea1623a0c642b21992)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25:
+
+- The pack, the fold and the handler tests run in-package: the 403, the
+  decision headers, the one evidence line, the clean forward
+  ([#248](https://github.com/trishula-dev/trishula/pull/248)).
+- The consult-signal run: the verdict span carries the action, the rule id
+  and the signature ([#252](https://github.com/trishula-dev/trishula/pull/252)).
+- The in-VM acceptance for the kernel legs: recorded on
+  [#253](https://github.com/trishula-dev/trishula/issues/253) with the run
+  transcript.
+
+## Recipe 10 — Watch the dynamic DoS signature: the shield runner end to end
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`cmd/shield/`](https://github.com/trishula-dev/trishula/tree/main/cmd/shield) · [`internal/shield/`](https://github.com/trishula-dev/trishula/tree/main/internal/shield) | Detection | hard | 15 min | kernel + engine | DoS, slowloris, signature, TR-195 |
+
+### Problem
+
+A slowloris trickle walks one flow; no request ever looks bad alone. You
+want the kernel-side counters to catch the shape, publish a ban and cite
+the same measured facts in evidence and telemetry.
+
+### Solution
+
+The runner reads the pinned `flow_stats` map, forms the cue from the
+flow window and drives the scored ban path. The signature states what the
+flow carried: the segment count, the bytes per segment and the span.
+
+1. Run the shield demo in the lab netns (the lab owns the pins and the
+   netns; the runner reads the same pins the programs write):
+
+```bash
+bash lab/demo.sh          # brings the veth pair, the tc hook and the pins up
+sudo ./shield --flow-stats /sys/fs/bpf/trishula/flow_stats \
+              --bans-v4 /sys/fs/bpf/trishula/bans_v4 -interval 2s
+```
+
+2. Drive the trickle from the client netns. Thirty tiny frames, one per
+   second and a bit, one flow:
+
+```text
+segs >= 24 · bytes/seg <= 64 · span >= 30 s
+```
+
+3. Read the would-ban the runner writes to the evidence JSONL:
+
+```bash
+tail -1 /tmp/tr195/dos_runner_evidence.jsonl
+```
+
+```text
+{"key":"10.77.0.66","verdict":"would-ban","tier":"scored-window",
+ "osig":{"class":"slowloris_suspect","segs":30,"bytesPerSeg":9,"spanSec":34}}
+```
+
+4. Read the same facts in telemetry. The engine emits `verdict.dos.sig`
+   on the verdict record; every flow-keyed would-ban carries a
+   `trishula.ban` record (`ban.key`, `ban.tier`, `ban.score`,
+   `ban.reason`) — the pipeline test pins both shapes.
+
+5. Watch the kernel row stop the next attempt. After the crossing the
+   offender's packet dies at the XDP ban program; a replay connect to the
+   shield answers with silence (the in-VM acceptance records exactly this
+   chain on [#253](https://github.com/trishula-dev/trishula/issues/253)).
+
+6. Tune: the detector floors live in
+   [`internal/engine/rateban/dos.go`](https://github.com/trishula-dev/trishula/blob/main/internal/engine/rateban/dos.go)
+   (`SlowlorisMinSegs` = 24, `SlowlorisMaxBytesPerSeg` = 64,
+   `SlowlorisMinSpanSec` = 30). The cue weights live in the ban weights
+   table (`kernelBurstFlag` = 3 points). Four cues per source cross the
+   threshold of 10.
+
+### Discussion
+
+The runner = the automation the spec promises: the map read, the cue, the
+scored evidence, the enforcer publish — one sweep at a time on an
+interval. Fail-open holds: a failed read or write surfaces, the packets
+keep passing, the interval retries.
+
+The signature is one object on three surfaces: the cue note, the evidence
+row (`osig`) and the verdict record (`verdict.dos.sig`). The in-VM
+acceptance proves the chain against a live kernel: the paced trickle, the
+4-sweep crossing, the XDP drop and the replay dying at the NIC.
+
+The rapid-reset shape (h2) scores through the same ban path; its cue
+carries the same signature layout with the reset ratio in place of the
+segment shape.
+
+### See also
+
+- [spec §13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — who does what. [spec §9.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#93-maps-and-state) — the maps the runner reads.
+- [Issue #253](https://github.com/trishula-dev/trishula/issues/253) — the in-VM acceptance receipt.
+- [PR #249](https://github.com/trishula-dev/trishula/pull/249) — the runner. [PR #250](https://github.com/trishula-dev/trishula/pull/250) — the signature on the records.
+- Recipe 9 above — the manual path for the same ban row.
+- Recipe 6 above — the scored ladder the cues feed.
+
+### Provenance
+
+Verified against [trishula@798beb1](https://github.com/trishula-dev/trishula/commit/aac9da071568c1eed4977cea1623a0c642b21992)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, inside the sprint Linux VM (OrbStack
+trishula-build-dev, arm64):
+
+- `go test -run TestDoSRunnerE2E ./test/dosrunner/`: the paced trickle, the
+  4-sweep crossing (`bans_v4[10.77.0.66] = {until_ms=…, score=1200,
+  reason_code=1300}`), the banned ping dead at XDP, the replay dead at the
+  NIC, the evidence JSONL carrying the sig — the verbatim transcript sits
+  on [#253](https://github.com/trishula-dev/trishula/issues/253).

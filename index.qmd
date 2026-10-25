@@ -83,7 +83,7 @@ the [ladder semantics](https://github.com/trishula-dev/trishula/blob/main/docs/s
 4. Engine-node veths carry the flow. TC tags the flow and publishes ring-buffer events. The events carry metadata only.
 5. The engine reconstructs HTTP/1.1, h2, gRPC and WebSocket. The output is the structured request view.
 6. The ladder walks S0 to S7 over one compiled bundle ([the ladder table](#fig-ladder)). The first decisive verdict short-circuits the walk. The action order: block, challenge, log, pass.
-7. `allow` forwards upstream. `block` answers a local 403. A ban answers 429 with `Retry-After` plus an evidence record. `challenge` issues an evidence request. `log` and `shadow` mark and continue ([the verdict figure](#fig-verdicts)).
+7. `allow` forwards upstream. `block` answers a local 403. A ban answers 429 with `Retry-After` plus an evidence record. `challenge` issues a 429 with a signed redirect ([the challenge](recipes.html#recipe-9) ships TR-197). `log` and `shadow` mark and continue ([the verdict figure](#fig-verdicts)).
 8. The response chain re-inspects: CRS phase 4, exfiltration checks, streaming-aware.
 9. ScoredWindowBan watches score breaches. The promotion path runs shadow first.
 10. A promoted ban lands in the kernel ban table. The next packet pays the kernel price. The engine also back-fills verdicts to the cache.
@@ -146,7 +146,7 @@ flowchart LR
     POOL -->|"8 · response"| RP["Response:<br/>phase 4 + exfil"] -->|to client| OUT["Back to client"]
     VD -->|block| VB["Local 403"]
     VD -->|ban| VN["429 + Retry-After"]
-    VD -->|challenge| VCh["Challenge"]
+    VD -->|challenge| VCh["Challenge:<br/>429 + signed redirect"]
     VD -->|"log / shadow"| VL["Continue"]
     VB -->|respond| OUT
     VN -->|respond| OUT
@@ -170,6 +170,7 @@ flowchart LR
 
     SWB["ScoredWindowBan v1:<br/>shadow, then enforce"]
     S6X -.->|breach| SWB
+    DOS["Shield runner<br/>(flow_stats sweep → cue)"] -.->|"cues"| SWB
     SWB -.->|"10 · ban push"| KB["Kernel ban<br/>table"]
     VX -.->|"10 · backfill"| KC["Kernel verdict<br/>cache"]
     LDX -.->|"11 · records"| TEL[("OTel:<br/>trishula.verdict.v1")]
