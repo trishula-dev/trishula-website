@@ -1,0 +1,17 @@
+---
+title: "Recipes"
+---
+
+## The recipe ramp
+
+| # | Recipe | Level | Feeds from |
+|---|---|---|---|
+| 1 | Install Trishula on a kind cluster and see the first verdict | easy | lab/dx1 |
+| 2 | Apply your first WAFPolicy: CR plus one curl, the verdict line | easy | spec 11.3 |
+
+## The categories
+
+| Page | Recipes | Covers |
+|---|---|---|
+| [Getting started](recipes-start.html) | 1, 2 | the basics |
+| [Deep](recipes-deep.html) | 2 | the deep leg |

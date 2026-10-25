@@ -41,6 +41,29 @@ def main() -> int:
     rc, out = gate(FIXTURES / "green")
     if rc != 0 or "GREEN" not in out:
         failures.append(f"green: compliant fixture flagged (rc={rc}): {out}")
+
+    # the cross-page mode: the index + the category pages. The drift
+    # fixture = the category's section title must match the index's ramp.
+    x = HERE / "fixtures" / "recipe_gate_xpage"
+    rc, out = gate(x)
+    if rc == 0:
+        failures.append("xpage-drift: gate ran GREEN, expected RED")
+    elif "title drift" not in out.lower():
+        failures.append(f"xpage-drift: RED without the cross-page drift fragment: {out}")
+
+    # the green twin: the drift removed = the whole cross-page root GREENs.
+    import shutil
+    g = HERE / "fixtures" / "recipe_gate_xpage_green"
+    if g.exists():
+        shutil.rmtree(g)
+    shutil.copytree(x, g)
+    deep = (g / "recipes-deep.qmd").read_text()
+    (g / "recipes-deep.qmd").write_text(deep.replace(
+        "Apply your first WAF policy but named differently",
+        "Apply your first WAFPolicy: CR plus one curl, the verdict line"))
+    rc, out = gate(g)
+    if rc != 0 or "GREEN" not in out:
+        failures.append(f"xpage-green: the cleaned cross-page root flagged (rc={rc}): {out}")
     if not failures:
         print("test_recipe_gate: OK (fixtures RED per rule + compliant fixture GREEN)")
         return 0
