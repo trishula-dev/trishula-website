@@ -50,13 +50,13 @@ positive-security record. The `cel` leg prints the S3 rate rule over the same
 view — the scoring input the ban ladder reads. The `ban` leg seeds one source ban through the loader ABI. A `BanVal` carries tier, reason code and a monotonic deadline. The value lands in the kernel map. The replay through the same flow dies in
 TC before userspace (`TC_ACT_SHOT`).
 
-The thresholds and tiers live in [spec §13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified).
+The thresholds and tiers live in [spec 13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified).
 This recipe drives the enforcement leg and the map evidence; the full decider
 census reads in the same section.
 
 ### See also
 
-- [spec §13](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#13-rate-limiting-dos-response--temporary-bans) — rate limits, DoS, bans. [spec §13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) — ScoredWindowBan.
+- [spec 13](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#13-rate-limiting-dos-response--temporary-bans) — rate limits, DoS, bans. [spec 13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) — ScoredWindowBan.
 - [`docs/demo.md`](https://github.com/trishula-dev/trishula/blob/main/docs/demo.md) — the demo's honesty table.
 - [Issue #83](https://github.com/trishula-dev/trishula/issues/83) — the recorded attack-demo transcripts.
 

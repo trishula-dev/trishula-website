@@ -55,7 +55,7 @@ reading green at the pinned target.
 
 ### See also
 
-- [spec §11.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#112-crs-the-correctness-baseline) — the correctness baseline. [spec §11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate) — the differential parity gate.
+- [spec 11.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#112-crs-the-correctness-baseline) — the correctness baseline. [spec 11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate) — the differential parity gate.
 - [The differential README](https://github.com/trishula-dev/trishula/blob/main/test/crs-differential/README.md) — the corpus and the delta table.
 - [TR-07 issue #7](https://github.com/trishula-dev/trishula/issues/7) — CRS integration.
 

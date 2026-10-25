@@ -12,12 +12,12 @@ Delivered scope spans inception to the 2026.01-rc3 release. Each step carries it
 
 **8 October — first capabilities**
 
-- The rule engine runs a security rule against a test request and returns a verdict — the core decision loop, verified by fixtures ([#2](https://github.com/trishula-dev/trishula/issues/2), [PR](https://github.com/trishula-dev/trishula/pull/59)).
-- The kernel packet filter compiles, loads under the verifier and detaches cleanly — the eBPF environment is proven ([#3](https://github.com/trishula-dev/trishula/issues/3), gate output in [lab](https://github.com/trishula-dev/trishula/blob/main/lab/README.md)).
+- The rule engine runs a security rule against a test request and returns a verdict. The core decision loop is verified by fixtures ([#2](https://github.com/trishula-dev/trishula/issues/2), [PR](https://github.com/trishula-dev/trishula/pull/59)).
+- The kernel packet filter compiles, loads under the verifier and detaches cleanly. The eBPF environment is proven ([#3](https://github.com/trishula-dev/trishula/issues/3)), with gate output in [lab](https://github.com/trishula-dev/trishula/blob/main/lab/README.md)).
 
 **9 October — packet path verified end to end**
 
-- The kernel-to-engine event channel passes its end-to-end test in the lab: packets become structured events with the correct field layout ([#4](https://github.com/trishula-dev/trishula/issues/4), [PR](https://github.com/trishula-dev/trishula/pull/81)).
+- The kernel-to-engine event channel passes its end-to-end test in the lab. Packets become structured events with the correct field layout ([#4](https://github.com/trishula-dev/trishula/issues/4), [PR](https://github.com/trishula-dev/trishula/pull/81)).
 - Requests score stage-by-stage (the inspection ladder), with verdicts recorded at each stage ([#5](https://github.com/trishula-dev/trishula/issues/5)).
 - HTTP request bodies parse into the structured view the rules operate on ([#5](https://github.com/trishula-dev/trishula/issues/5), [PR](https://github.com/trishula-dev/trishula/pull/88)).
 
@@ -31,8 +31,8 @@ Delivered scope spans inception to the 2026.01-rc3 release. Each step carries it
 - Repeat offenders are dropped in the kernel, bans expire automatically, and every ban produces an evidence record ([#10](https://github.com/trishula-dev/trishula/issues/10), [PR](https://github.com/trishula-dev/trishula/pull/105)).
 - Every verdict emits three correlated records — trace, metric, log — tied by request id ([#11](https://github.com/trishula-dev/trishula/issues/11), [PR](https://github.com/trishula-dev/trishula/pull/101)).
 - Automated clients are distinguishable from browsers by traffic fingerprints, validated against published test vectors ([#12](https://github.com/trishula-dev/trishula/issues/12), [PR](https://github.com/trishula-dev/trishula/pull/99)).
-- A route's published API schema acts as an allow-list: non-conforming requests are rejected with a diagnostic naming the violated field ([#13](https://github.com/trishula-dev/trishula/issues/13), [PR](https://github.com/trishula-dev/trishula/pull/102)).
-- The platform's limits are stated, not implied: the README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)). The release is signed and published ([2026.01-rc1](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc1)).
+- A route's published API schema acts as an allow-list. The platform rejects non-conforming requests with a diagnostic naming the violated field ([#13](https://github.com/trishula-dev/trishula/issues/13), [PR](https://github.com/trishula-dev/trishula/pull/102)).
+- The platform's limits are stated, not implied. The README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)). The release is signed and published ([2026.01-rc1](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc1)).
 
 **23 October — 2026.01-rc2**
 
@@ -45,11 +45,11 @@ Delivered scope spans inception to the 2026.01-rc3 release. Each step carries it
 
 **24 October — 2026.01-rc3**
 
-- Behavioural DoS detectors land as shadowed shapes: the kernel counts per-flow window features, the engine classifies slowloris and rapid-reset ([#31](https://github.com/trishula-dev/trishula/issues/31), [PR](https://github.com/trishula-dev/trishula/pull/225)).
+- Behavioural DoS detectors land as shadowed shapes. The kernel counts per-flow window features; the engine classifies slowloris and rapid-reset ([#31](https://github.com/trishula-dev/trishula/issues/31), [PR](https://github.com/trishula-dev/trishula/pull/225)).
 - The engine gains its TLS-termination secondary mode, fail-closed on a split pair ([#34](https://github.com/trishula-dev/trishula/issues/34), [PR](https://github.com/trishula-dev/trishula/pull/218)).
 - The build ships multi-arch with OpenShift compatibility notes ([#33](https://github.com/trishula-dev/trishula/issues/33), [PR](https://github.com/trishula-dev/trishula/pull/215)).
 - The uninstall residue gate asserts zero kernel leftovers after live teardown in CI ([#35](https://github.com/trishula-dev/trishula/issues/35), [PR](https://github.com/trishula-dev/trishula/pull/186)).
-- The socket-plane compiler lands its first class: route marking compiles end to end, the verifier gate runs in CI, the shadow differential pins the mismatch budget ([#52](https://github.com/trishula-dev/trishula/issues/52), PRs [#200](https://github.com/trishula-dev/trishula/pull/200), [#207](https://github.com/trishula-dev/trishula/pull/207), [#212](https://github.com/trishula-dev/trishula/pull/212)).
+- The socket-plane compiler lands its first class. Route marking compiles end to end; the verifier gate runs in CI; the shadow differential pins the mismatch budget. The work spans ([#52](https://github.com/trishula-dev/trishula/issues/52), PRs [#200](https://github.com/trishula-dev/trishula/pull/200), [#207](https://github.com/trishula-dev/trishula/pull/207), [#212](https://github.com/trishula-dev/trishula/pull/212)).
 - The declarative layer moves to CUE with a golden-diff gate against hand edits ([#46](https://github.com/trishula-dev/trishula/issues/192), [PR](https://github.com/trishula-dev/trishula/pull/222)).
 - The Academy ships modules 1, 3, 4 and 2, 5 ([#27](https://github.com/trishula-dev/trishula/issues/27), [#28](https://github.com/trishula-dev/trishula/issues/28), PRs [#178](https://github.com/trishula-dev/trishula/pull/178), [#210](https://github.com/trishula-dev/trishula/pull/210)).
 - The tracked evaluations publish: HTTP/3 ingress posture, the DPU port, the composition watch ([#29](https://github.com/trishula-dev/trishula/issues/29), [#32](https://github.com/trishula-dev/trishula/issues/32), [#36](https://github.com/trishula-dev/trishula/issues/36)).
@@ -65,7 +65,7 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 | **2026.01-rc2** ([release](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc2)) | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_process, DX gate, bench, multi-tenancy, Envoy lane | delivered 2026-10-23 |
 | **2026.01-rc3** ([release](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc3)) | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch | delivered 2026-10-24 |
 | **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): socket-plane L7 fast path study (Beeline), WAFPolicy→eBPF compiler spike, kernel-altitude TLS posture (kTLS vs no-key signals) | parked |
-| **GA track 2026.01 — in progress** | [TR-194](https://github.com/trishula-dev/trishula/issues/236)–[TR-202](https://github.com/trishula-dev/trishula/issues/244) build streams. Shipped: the stage stamps ([PR #245](https://github.com/trishula-dev/trishula/pull/245)); the manual ban rule ([PR #248](https://github.com/trishula-dev/trishula/pull/248)); the shield DoS runner + the in-VM acceptance ([PR #249](https://github.com/trishula-dev/trishula/pull/249), [#253](https://github.com/trishula-dev/trishula/issues/253)); the DoS signature on evidence and telemetry ([PR #250](https://github.com/trishula-dev/trishula/pull/250)); the consult verdict signals ([PR #252](https://github.com/trishula-dev/trishula/pull/252)). The challenge hop ships end to end: the token + the redirect ([PR #256](https://github.com/trishula-dev/trishula/pull/256)), the evidence-of-work probe + the pass grant ([PR #258](https://github.com/trishula-dev/trishula/pull/258)). Queued: the socket class 2, the JWT stage, the protocol conformance, the UDP/QUIC class, kTLS, the DPU shape | leaves merge as green |
+| **GA track 2026.01 — in progress** | [TR-194](https://github.com/trishula-dev/trishula/issues/236)–[TR-202](https://github.com/trishula-dev/trishula/issues/244) build streams. Shipped: the stage stamps ([PR #245](https://github.com/trishula-dev/trishula/pull/245)); the manual ban rule ([PR #248](https://github.com/trishula-dev/trishula/pull/248)); the shield DoS runner + the in-VM acceptance ([PR #249](https://github.com/trishula-dev/trishula/pull/249), [#253](https://github.com/trishula-dev/trishula/issues/253)); the DoS signature on evidence and telemetry ([PR #250](https://github.com/trishula-dev/trishula/pull/250)); the consult verdict signals ([PR #252](https://github.com/trishula-dev/trishula/pull/252)). The challenge hop ships end to end: the token + the redirect ([PR #256](https://github.com/trishula-dev/trishula/pull/256)), the evidence-of-work probe + the pass grant ([PR #258](https://github.com/trishula-dev/trishula/pull/258)). Also in this cut: [TR-203](https://github.com/trishula-dev/trishula/issues/264) — the TLS-termination lane (the QUIC ingress via NGF/k8s, the eBPF UDP class, the PQC key exchange, the JA4/PQC corpus); re-encryption = the named post-GA boundary. Queued: the socket class 2, the JWT stage, the protocol conformance, kTLS, the DPU shape | leaves merge as green |
 ## What is left
 
 The releases carry honest caps. The remaining gaps, stated:
@@ -77,7 +77,7 @@ The releases carry honest caps. The remaining gaps, stated:
 
 ## Sprint sequencing
 
-The 2026.01-rc1 sprint sequence: shield PoC → ingest → ladder slice → NGF steering lab → CRS differential → operator/CRD round-trip → ScoredWindowBan → OTel pipeline → bot v0 → positive security v0 → honest exit ([TR-14](https://github.com/trishula-dev/trishula/issues/14)).
+The 2026.01-rc1 sprint sequence runs in stages: shield PoC → ingest → ladder slice → NGF steering lab. The mid sequence: CRS differential → operator/CRD round-trip → ScoredWindowBan → OTel pipeline. The last stages: bot v0 → positive security v0 → honest exit ([TR-14](https://github.com/trishula-dev/trishula/issues/14)).
 
 ## Contributing
 

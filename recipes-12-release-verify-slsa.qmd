@@ -16,7 +16,9 @@ before the binary runs anywhere.
 
 Every release asset carries two attestations the moment the release
 publishes: the SLSA provenance (`https://slsa.dev/provenance/v1`) and the
-SPDX SBOM (`https://spdx.dev/Document/v2.3`). Both are Rekor-backed
+SPDX SBOM (`https://spdx.dev/Document/v2.3`).
+
+Both are Rekor-backed
 Sigstore bundles.
 
 1. Verify one asset:
@@ -36,8 +38,8 @@ invocation  = https://github.com/trishula-dev/trishula/actions/runs/<run-id>
 
 3. Check the count matches the release. The rc3 asset
    `ban_enforce_arm64_bpfel.o` (sha256 `cad16bcf…`) carried 6 provenance
-   + 6 SBOM bundles (the attest runs re-run per re-attest; every bundle
-   verifies independently).
+   + 6 SBOM bundles. The attest runs re-run per re-attest; every bundle
+   verifies independently.
 
 4. Verify in bulk before deploying a fleet:
 
@@ -49,12 +51,12 @@ for f in assets/*; do gh attestation verify "$f" -R trishula-dev/trishula; done
 ### Discussion
 
 The verification runs offline-grade: the bundle carries the Rekor
-inclusion promise and proof; `gh attestation verify` checks the Sigstore
+inclusion promise and proof. `gh attestation verify` checks the Sigstore
 trust root. A failed verify = the asset does not match what CI built —
 do not deploy it, file it. The SHA in `checksums.txt` pins the bytes;
 the attestation pins the producer. Both must hold.
 
-The GA cut notes carry this block per the release rule; the verify
+The GA cut notes carry this block per the release rule. The verify
 command runs the same on every future tag.
 
 ### See also
@@ -74,5 +76,5 @@ Smoke run, 2026-10-25:
 - `gh attestation verify /tmp/ban_enforce_arm64_bpfel.o -R trishula-dev/trishula`
   on the `2026.01-rc3` asset: exit 0.
 - The attestation API read 12 bundles for the asset sha: 6 provenance/v1
-  + 6 SPDX 2.3; the builder id, the build type and the Rekor log entries
+  + 6 SPDX 2.3. The builder id, the build type and the Rekor log entries
   recorded above.

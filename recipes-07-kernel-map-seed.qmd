@@ -43,7 +43,7 @@ The bundle shapes walk as a contract. A bundle that loses its kernel leg fails b
 
 ### See also
 
-- [spec §16.4](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#164-lifecycle-of-trishula-in-a-cluster) — the lifecycle of Trishula in a cluster.
+- [spec 16.4](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#164-lifecycle-of-trishula-in-a-cluster) — the lifecycle of Trishula in a cluster.
 - [`docs/design/socket-plane/4-compiler-census.md`](https://github.com/trishula-dev/trishula/blob/main/docs/design/socket-plane/4-compiler-census.md) — the census boundary.
 - [TR-40b issue #188](https://github.com/trishula-dev/trishula/issues/188) — the route-class end-to-end lane.
 

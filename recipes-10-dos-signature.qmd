@@ -9,8 +9,8 @@ title: "Recipe 10 — Watch the dynamic DoS signature: the shield runner end to 
 ### Problem
 
 A slowloris trickle walks one flow; no request ever looks bad alone. You
-want the kernel-side counters to catch the shape, publish a ban and cite
-the same measured facts in evidence and telemetry.
+want the kernel-side counters to catch the shape and publish a ban. You
+want the same measured facts in evidence and telemetry.
 
 ### Solution
 
@@ -18,8 +18,8 @@ The runner reads the pinned `flow_stats` map, forms the cue from the
 flow window and drives the scored ban path. The signature states what the
 flow carried: the segment count, the bytes per segment and the span.
 
-1. Run the shield demo in the lab netns (the lab owns the pins and the
-   netns; the runner reads the same pins the programs write):
+1. Run the shield demo in the lab netns. The lab owns the pins and the
+   netns; the runner reads the same pins the programs write:
 
 ```bash
 bash lab/demo.sh          # brings the veth pair, the tc hook and the pins up
@@ -46,14 +46,14 @@ tail -1 /tmp/tr195/dos_runner_evidence.jsonl
 ```
 
 4. Read the same facts in telemetry. The engine emits `verdict.dos.sig`
-   on the verdict record; every flow-keyed would-ban carries a
+   on the verdict record. Every flow-keyed would-ban carries a
    `trishula.ban` record (`ban.key`, `ban.tier`, `ban.score`,
-   `ban.reason`) — the pipeline test pins both shapes.
+   `ban.reason`); the pipeline test pins both shapes.
 
 5. Watch the kernel row stop the next attempt. After the crossing the
-   offender's packet dies at the XDP ban program; a replay connect to the
-   shield answers with silence (the in-VM acceptance records exactly this
-   chain on [#253](https://github.com/trishula-dev/trishula/issues/253)).
+   offender's packet dies at the XDP ban program. A replay connect to the
+   shield answers with silence. The in-VM acceptance records exactly this
+   chain on [#253](https://github.com/trishula-dev/trishula/issues/253).
 
 6. Tune: the detector floors live in
    [`internal/engine/rateban/dos.go`](https://github.com/trishula-dev/trishula/blob/main/internal/engine/rateban/dos.go)
@@ -65,22 +65,23 @@ tail -1 /tmp/tr195/dos_runner_evidence.jsonl
 ### Discussion
 
 The runner = the automation the spec promises: the map read, the cue, the
-scored evidence, the enforcer publish — one sweep at a time on an
+scored evidence, the enforcer publish. Each sweep runs one at a time on an
 interval. Fail-open holds: a failed read or write surfaces, the packets
 keep passing, the interval retries.
 
 The signature is one object on three surfaces: the cue note, the evidence
 row (`osig`) and the verdict record (`verdict.dos.sig`). The in-VM
-acceptance proves the chain against a live kernel: the paced trickle, the
-4-sweep crossing, the XDP drop and the replay dying at the NIC.
+acceptance proves the chain against a live kernel. The chain = the paced
+trickle, the 4-sweep crossing, the XDP drop and the replay dying at the
+NIC.
 
-The rapid-reset shape (h2) scores through the same ban path; its cue
+The rapid-reset shape (h2) scores through the same ban path. Its cue
 carries the same signature layout with the reset ratio in place of the
 segment shape.
 
 ### See also
 
-- [spec §13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — who does what. [spec §9.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#93-maps-and-state) — the maps the runner reads.
+- [spec 13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — who does what. [spec 9.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#93-maps-and-state) — the maps the runner reads.
 - [Issue #253](https://github.com/trishula-dev/trishula/issues/253) — the in-VM acceptance receipt.
 - [PR #249](https://github.com/trishula-dev/trishula/pull/249) — the runner. [PR #250](https://github.com/trishula-dev/trishula/pull/250) — the signature on the records.
 - [Recipe 9 — the manual path for the same ban row.](recipes-09-manual-ban.html)
@@ -94,8 +95,9 @@ on main, 2026-10-25.
 Smoke run, 2026-10-25, inside the sprint Linux VM (OrbStack
 trishula-build-dev, arm64):
 
-- `go test -run TestDoSRunnerE2E ./test/dosrunner/`: the paced trickle, the
-  4-sweep crossing (`bans_v4[10.77.0.66] = {until_ms=…, score=1200,
-  reason_code=1300}`), the banned ping dead at XDP, the replay dead at the
-  NIC, the evidence JSONL carrying the sig — the verbatim transcript sits
+- `go test -run TestDoSRunnerE2E ./test/dosrunner/`: the paced trickle. The
+  4-sweep crossing, the banned ping dead at XDP, the replay dead at the
+  NIC followed. The map row after the crossing:
+  `bans_v4[10.77.0.66] = {until_ms=…, score=1200, reason_code=1300}`. The
+  evidence JSONL carries the sig. The verbatim transcript sits
   on [#253](https://github.com/trishula-dev/trishula/issues/253).

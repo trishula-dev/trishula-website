@@ -29,9 +29,9 @@ rules:
       request.method == "POST" && path.matches("/v1/chat/*")
 ```
 
-2. Ship it the way every rule ships: the ConfigMap + the `WAFPolicy` CR
-   that points at the pack (Recipe 2 owns that surface). Compile and apply.
-   The gate compiles the pack; the CRD carries the bundle.
+2. Ship it the way every rule ships: the ConfigMap + the `WAFPolicy` CR.
+   The CR points at the pack; Recipe 2 owns that surface. Compile and
+   apply. The gate compiles the pack; the CRD carries the bundle.
 
 ```bash
 kubectl -n trishula apply -f rulepack-manual-ban.yaml
@@ -72,7 +72,7 @@ would-ban 192.0.2.10 tier=manual-rule score=0 sig={Class:manual-rule Paths:[/v1/
 ### Discussion
 
 `action: ban` folds with the response ladder as a block class on the
-inside and a direct would-ban out the back. The record carries the
+inside. The same action folds as a direct would-ban out the back. The record carries the
 `manual-rule` tier and the signature (`class`, `paths`). The same record
 reaches the enforcer the scored path uses; a deployed enforcer publishes
 the kernel row the same way. The verdict signals name the rule: the
@@ -86,8 +86,8 @@ write stays logged; the block decision stands.
 
 ### See also
 
-- [spec §13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — the manual and the automatic paths.
-- [spec §13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) — the scored path the record shares.
+- [spec 13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — the manual and the automatic paths.
+- [spec 13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) — the scored path the record shares.
 - [Issue #237](https://github.com/trishula-dev/trishula/issues/237) — the DoS/ban stream. [PR #248](https://github.com/trishula-dev/trishula/pull/248) — the ban surface. [PR #252](https://github.com/trishula-dev/trishula/pull/252) — the signals.
 - [Recipe 6 — the scored ban ladder.](recipes-06-ban-ladder.html)
 - [Recipe 10 — the signature the record carries.](recipes-10-dos-signature.html)
@@ -99,8 +99,8 @@ on main, 2026-10-25.
 
 Smoke run, 2026-10-25:
 
-- The pack, the fold and the handler tests run in-package: the 403, the
-  decision headers, the one evidence line, the clean forward
+- The pack, the fold and the handler tests run in-package: the 403,
+  decision headers, evidence line, clean forward
   ([#248](https://github.com/trishula-dev/trishula/pull/248)).
 - The consult-signal run: the verdict span carries the action, the rule id
   and the signature ([#252](https://github.com/trishula-dev/trishula/pull/252)).

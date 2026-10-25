@@ -29,7 +29,7 @@ verdict log (parity walk, S0+S3 slice):
 parity OK
 ```
 
-3. Read the record schema at [spec §15.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#152-the-verdict-record-log-body-schema-versioned).
+3. Read the record schema at [spec 15.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#152-the-verdict-record-log-body-schema-versioned).
 The record carries six fields: `request.id`, `verdict.action`, `verdict.phase`, `verdict.route`,
 `verdict.rules`, `verdict.score`.
 
@@ -46,7 +46,7 @@ network exporter ship at this pin. The parity walk is the reader surface.
 
 ### See also
 
-- [spec §15](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#15-opentelemetry-observability) — the observability contract. [spec §15.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#152-the-verdict-record-log-body-schema-versioned) — the record schema.
+- [spec 15](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#15-opentelemetry-observability) — the observability contract. [spec 15.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#152-the-verdict-record-log-body-schema-versioned) — the record schema.
 - [`internal/engine/otel/pipeline.go`](https://github.com/trishula-dev/trishula/blob/main/internal/engine/otel/pipeline.go) — the signal schema in code.
 - [TR-11 issue #11](https://github.com/trishula-dev/trishula/issues/11) — the verdict pipeline.
 - [Recipe 1 — the install path.](recipes-01-install-kind.html)

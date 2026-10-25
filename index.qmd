@@ -14,34 +14,34 @@ The install is three workloads, driven by Helm and `kubectl apply`:
    - **XDP** runs on every node NIC. It drops L3/L4 abuse: IP ACLs, SYN/UDP-flood tarpits, repeat-offender bans, cached verdicts. The decision cost is about 1 µs per packet.
    - **TC** runs on the engine-node interfaces. It classifies flows, counts rate windows and publishes ring-buffer events. The events carry metadata only.
 2. **`trishula-engine`** — a Deployment, a plain Service behind an `HTTPRoute`. It runs the full HTTP inspection ladder in userspace:
-   - **OWASP CRS** via embedded Coraza
-   - developer-written **CEL rules**, cost-budgeted
-   - **OpenAPI positive security**: blocks what the route schema does not declare
-   - **JA4 + header + behavioural bot detection**
-   - **per-route rate limits**
-   - the scored **temporary-ban engine**: the fail2ban model, re-specified for HTTP, kernel-enforced
-3. **`trishula-operator`** — a Deployment. It reads the four CRDs (`WAFPolicy`, `APISpec`, `RuleSet`, `BanPolicy`). It compiles signed bundles: evaluator chains, a Vectorscan matcher DB for the hot regex subset, kernel map values and ban thresholds. Hot reload runs within 5 s. Rollback re-pins the previous bundle and records the re-pin in the CRD.
+   - **OWASP CRS** via embedded Coraza.
+   - developer-written **CEL rules**, cost-budgeted.
+   - **OpenAPI positive security**: blocks what the route schema does not declare.
+   - **JA4 + header + behavioural bot detection**.
+   - **per-route rate limits**.
+   - the scored **temporary-ban engine**: the fail2ban model, re-specified for HTTP, kernel-enforced.
+3. **`trishula-operator`** — a Deployment. It reads the four CRDs (`WAFPolicy`, `APISpec`, `RuleSet`, `BanPolicy`). It compiles signed bundles: evaluator chains, a Vectorscan matcher DB for the hot regex subset. The bundles carry kernel map values and ban thresholds. Hot reload runs within 5 s. Rollback re-pins the previous bundle and records the re-pin in the CRD.
 
 **What the developer writes:** a CEL rule over the structured request view. Example: `request.method == "POST" && path.matches("/v1/chat/*") && size(request.body.?json.messages) > 128`. Also the OpenAPI spec the API already has. Also the 4 YAML CRDs. No proprietary rule language. No vendor console. No sidecar config files.
 
 **What it stops:**
 
-- credential stuffing: auth-failure ratios + JA4 spread → scored bans
-- request smuggling: strict normalization + the differential corpus ([§11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate))
-- slowloris and connection starvation: kernel flow counters, per-request WAFs cannot see them
-- DoS on expensive AI endpoints: per-route rate ladders + ban escalation
-- prompt-injection payload abuse: the ML scorer cascade + the async judge
-- known bot and tooling masquerades: JA4 + header-order fingerprints against the pinned tooling DB
-- the OWASP Top-10: CRS 4.x, with the CI-blocking verdict-parity gate
+- credential stuffing: auth-failure ratios + JA4 spread → scored bans.
+- request smuggling: strict normalization + the differential corpus ([11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate)).
+- slowloris and connection starvation: kernel flow counters; per-request WAFs cannot see them.
+- DoS on expensive AI endpoints: per-route rate ladders + ban escalation.
+- prompt-injection payload abuse: the ML scorer cascade + the async judge.
+- known bot and tooling masquerades: JA4 + header-order fingerprints against the pinned tooling DB.
+- the OWASP Top-10: CRS 4.x, with the CI-blocking verdict-parity gate.
 
 **What it does not do:**
 
-- no service mesh
-- no secrets vault
-- no endpoint picker
-- no web console: the OTel backend is the console
-- no HTTP/3 claim ([TR-29](https://github.com/trishula-dev/trishula/issues/29))
-- performance numbers carry the "target" label until the benchmark plan ([TR-24](https://github.com/trishula-dev/trishula/issues/24)) measures them
+- no service mesh.
+- no secrets vault.
+- no endpoint picker.
+- no web console: the OTel backend is the console.
+- no HTTP/3 claim ([TR-29](https://github.com/trishula-dev/trishula/issues/29)).
+- performance numbers carry the "target" label until the benchmark plan ([TR-24](https://github.com/trishula-dev/trishula/issues/24)) measures them.
 
 ## Why this project
 
@@ -65,14 +65,14 @@ Negative signatures alone cannot carry this load: the good-traffic risk is high,
 The design has two planes and one control plane. The kernel plane answers the cheap decisions. The userspace plane runs the deep checks. The operator compiles policy into both planes.
 
 - **Shield** (DaemonSet, XDP/TC): ACL, verdict cache and ban table, enforced where the packet arrives; fail-open by default.
-- **Engine** (Deployment): the detection ladder S0–S7 ([§2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)). The stages in walk order: kernel verdict hits; the Vectorscan hot subset; OWASP CRS via embedded Coraza; CEL rules under cost budgets; OpenAPI positive security; bot fingerprints and behaviour; rate limits with kernel-enforced bans; the ML scorer.
+- **Engine** (Deployment): the detection ladder S0–S7 ([2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)). The stages in walk order: kernel verdict hits; the Vectorscan hot subset; OWASP CRS via embedded Coraza. Then: CEL rules under cost budgets; OpenAPI positive security; bot fingerprints and behaviour. Last: rate limits with kernel-enforced bans; the ML scorer.
 - **Operator** (Deployment): compiles `WAFPolicy`/`BanPolicy` CRs into engine bundles and pre-seeds the shield maps. Rollback is a CRD-recorded re-pin.
 
 Each verdict is a correlated OpenTelemetry record (`trishula.verdict.v1`). Dashboards ship in-repo.
 
 ### The packet path, end to end
 
-Five views follow one request from the wire to the app pool and back: [the kernel plane](#fig-kernel), [the gateway and the engine node](#fig-gateway), [the ladder](#fig-ladder), [the verdicts](#fig-verdicts) and [the state returns](#fig-state).
+Five views follow one request from the wire to the app pool and back. The views: [the kernel plane](#fig-kernel), [the gateway and the engine node](#fig-gateway), [the ladder](#fig-ladder), [the verdicts](#fig-verdicts) and [the state returns](#fig-state).
 The canonical records: the [request lifecycle](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#83-request-lifecycle),
 the [ladder semantics](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures), the [two-plane principle](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#91-the-two-plane-principle), the
 [ban algorithm](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) and the [telemetry contract](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#15-opentelemetry-observability).
@@ -133,7 +133,7 @@ flowchart LR
 | S6 | rate windows | per-route counters; breaches + ban events | the kernel counters |
 | S7 | ML scorer | the local ONNX score + the async judge | `MLModel` bundle |
 
-The first decisive verdict short-circuits the walk; the action order: block, challenge, log, pass ([§2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)). Most requests pass at the kernel or matcher stage. [The verdicts](#fig-verdicts) carry the outcomes.
+The first decisive verdict short-circuits the walk; the action order: block, challenge, log, pass ([2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)). Most requests pass at the kernel or matcher stage. [The verdicts](#fig-verdicts) carry the outcomes.
 
 :::
 
@@ -215,7 +215,7 @@ flowchart TB
 - **Node requirements:** kernel 5.8+; the shield is CO-RE and verifier-checked in CI.
 - **Telemetry:** every verdict is one OTLP span + metric + log on `trishula.verdict.v1`; dashboards ship in-repo.
 
-**Detection ladder** ([§2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures); short-circuit on the first decisive verdict): S0 kernel hits (bans + cached verdicts) → S1 Vectorscan hot subset → S2 CRS via embedded Coraza → S3 CEL rules → S4 OpenAPI positive security → S5 bot evidence → S6 rate windows + ban events → S7 ML scorer (local ONNX + async judge).
+**Detection ladder** ([2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures); short-circuit on the first decisive verdict). The stages: S0 kernel hits (bans + cached verdicts) → S1 Vectorscan hot subset → S2 CRS via embedded Coraza. Later: S3 CEL rules → S4 OpenAPI positive security → S5 bot evidence. Last: S6 rate windows + ban events → S7 ML scorer (local ONNX + async judge).
 ScoredWindowBan turns repeated abuse into kernel-enforced temporary bans. The bans carry evidence records. Prefix escalation stays off by default.
 
 ## Design rationale
@@ -247,7 +247,7 @@ The education programme is the adoption mechanism:
 - **The 15-minute gate** ([TR-23](https://github.com/trishula-dev/trishula/issues/23), metric M3) — clone → first enforced rule in ≤ 15 minutes, timed nightly in CI. A regression stops the release.
 - **Copy-paste-first policy recipes** — every lab ships the exact YAML a developer would commit.
 - **Promotion gates as the adoption path** — learn → shadow → enforce is a safety mechanism and the adoption journey together. Each stage has a lab.
-- **Verdict telemetry a developer reads** — one correlated OTel record per request; the schema (`trishula.verdict.v1`) is documented like the API it is.
+- **Verdict telemetry a developer reads** — one correlated OTel record per request. The schema (`trishula.verdict.v1`) is documented like the API it is.
 - **Honest exit criteria** — every release states what works and what does not.
 
 The audience: the application developer and platform engineer who runs Kubernetes. Documentation, labs and error messages read at that level first.
@@ -275,5 +275,5 @@ The [security policy](security.html) covers vulnerability reporting, supported v
 **[Download the research paper (PDF)](/assets/trishula-paper.pdf){.download}** — 18 pp (abstract, keywords, contents, numbered references). The arXiv link lands here when the paper is archived.
 :::
 
-The research paper (*"Trishula: An eBPF-Native, Developer-First Web Application and API Firewall for Kubernetes"*) is the research companion to this site. It carries the adoptability thesis, the field survey and the adoption plan. The survey covers Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban and the eBPF cousins, with the feature-coverage matrix.
+The site's research companion = the research paper (*"Trishula: An eBPF-Native, Developer-First Web Application and API Firewall for Kubernetes"). It carries the adoptability thesis, the field survey and the adoption plan. The survey covers Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban and the eBPF cousins, with the feature-coverage matrix.
 A public link lands here when the paper is archived; until then the paper lives in the project docs.

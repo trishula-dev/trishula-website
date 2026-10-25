@@ -15,8 +15,9 @@ the client work, not a permanent ban. You want evidence of what answered.
 ### Solution
 
 Two surfaces ship the flow: the detector consensus resolves `challenge`
-(two distinct families at or above the confidence floor), and the engine
-answers with a signed redirect that costs one small hash probe.
+and the engine answers with a signed redirect. The redirect costs one
+small hash probe. The consensus needs two distinct families at or above
+the confidence floor.
 
 1. Generate the signing key and start the engine with it. No key = the
    challenge verdict refuses (the gate never pretends to challenge):
@@ -29,7 +30,7 @@ CHALLENGE_KEY=$(openssl rand -hex 32)
 ```
 
 2. Point the policy at the wall. The CRD carries the action today:
-   `defaultAction: challenge`, or the bot consensus resolves it when two
+   `defaultAction: challenge`. The bot consensus resolves it when two
    detector families agree per source:
 
 ```yaml
@@ -78,7 +79,7 @@ Set-Cookie: trishula_pass=<token>; HttpOnly; Max-Age=600
 ### Discussion
 
 The token = the payload + the HMAC-SHA256 over it. The expiry lives in
-the payload (a 10-minute TTL); a nonce marks one-shot use: a consumed
+the payload (a 10-minute TTL). A nonce marks one-shot use: a consumed
 token refuses the second solve. A tampered payload, a dropped byte or a
 wrong key refuses with the named reason in the hop's log. A past-expiry
 token refuses identically — the exit criterion "the replay beyond the
@@ -86,14 +87,14 @@ TTL refuses" holds two ways.
 
 Fail-open stays off here on purpose: a challenge that cannot mint is a
 deterministic `403`, never a silent pass. The proof probe stays small by
-default (16 bits); the difficulty is a constant in
+default (16 bits). The difficulty is a constant in
 [`internal/engine/challenge/eow.go`](https://github.com/trishula-dev/trishula/blob/main/internal/engine/challenge/eow.go)
 until the CRD knob ships.
 
 ### See also
 
-- [spec §12.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#122-verdict-integration) — the challenge verdict in the ladder.
-- [spec §13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — where the challenge sits beside the ban path.
+- [spec 12.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#122-verdict-integration) — the challenge verdict in the ladder.
+- [spec 13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — where the challenge sits beside the ban path.
 - [Issue #239](https://github.com/trishula-dev/trishula/issues/239) — the stream. [PR #256](https://github.com/trishula-dev/trishula/pull/256) · [PR #258](https://github.com/trishula-dev/trishula/pull/258) — the leaves.
 - [Recipe 9 — the manual `action: ban` for the confirmed offender.](recipes-09-manual-ban.html)
 
@@ -105,12 +106,12 @@ on main, 2026-10-25.
 Smoke run, 2026-10-25:
 
 - `go test ./internal/engine/challenge/`: the mint/verify round trip, the
-  expiry, the tamper and the wrong key, the one-shot replay, the peek
-  non-consumption, the work-growth pin.
+  expiry, the tamper and the wrong key. The run covers the one-shot
+  replay, the peek non-consumption, the work-growth pin.
 - `go test ./cmd/engine/ -run TestChallenge`: the 429 + the redirect, the
   verified hop, the tampered hop, the no-key refusal.
-- `go test ./cmd/engine/ -run TestEvidenceOfWork`: the full flow — the
-  problem, the wrong answer, the solve, the pass cookie, the forwarded
-  retry, the un-solved retry bouncing.
+- `go test ./cmd/engine/ -run TestEvidenceOfWork`: the problem, the wrong
+  answer, the solve, the pass cookie, the forwarded retry. The un-solved
+  retry bounces.
 - CI: run [40172145425](https://github.com/trishula-dev/trishula/actions/runs/40172145425)
   green on [PR #258](https://github.com/trishula-dev/trishula/pull/258).
