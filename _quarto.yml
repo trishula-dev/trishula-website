@@ -17,6 +17,55 @@ project:
     - "code-of-conduct.qmd"
 
 website:
+  sidebar:
+    - title: "Trishula"
+      style: "docked"
+      collapse-level: 2
+      contents:
+        - href: index.qmd
+          text: Home
+        - href: roadmap.qmd
+          text: Roadmap
+        - href: building.qmd
+          text: Build
+        - section: "Recipes"
+          href: recipes.qmd
+          contents:
+            - section: "Getting started"
+              href: recipes-getting-started.qmd
+              contents:
+                - recipes-getting-started.qmd#recipe-1
+                - recipes-getting-started.qmd#recipe-2
+                - recipes-getting-started.qmd#recipe-3
+            - section: "Policy and rules"
+              href: recipes-policy.qmd
+              contents:
+                - recipes-policy.qmd#recipe-4
+                - recipes-policy.qmd#recipe-9
+                - recipes-policy.qmd#recipe-11
+            - section: "Kernel enforcement"
+              href: recipes-kernel.qmd
+              contents:
+                - recipes-kernel.qmd#recipe-6
+                - recipes-kernel.qmd#recipe-7
+                - recipes-kernel.qmd#recipe-10
+            - section: "CRS and the bench"
+              href: recipes-crs-bench.qmd
+              contents:
+                - recipes-crs-bench.qmd#recipe-5
+                - recipes-crs-bench.qmd#recipe-8
+            - section: "Release and supply chain"
+              href: recipes-release.qmd
+              contents:
+                - recipes-release.qmd#recipe-12
+        - href: agents.qmd
+          text: Agents
+        - href: contributing.qmd
+          text: Contributing
+        - href: security.qmd
+          text: Security
+        - href: code-of-conduct.qmd
+          text: Code of Conduct
   title: "Trishula"
   description: "Trishula: an eBPF-native, developer-first WAF and API firewall for Kubernetes. Research project for adoption."
   site-url: https://trishula.dev
@@ -39,20 +88,6 @@ website:
       - href: building.qmd
         text: Build
     right:
-      - text: Recipes
-        menu:
-          - href: recipes.qmd
-            text: All recipes
-          - href: recipes-getting-started.qmd
-            text: Getting started (1–3)
-          - href: recipes-policy.qmd
-            text: Policy and rules (4, 9, 11)
-          - href: recipes-kernel.qmd
-            text: Kernel enforcement (6, 7, 10)
-          - href: recipes-crs-bench.qmd
-            text: CRS and the bench (5, 8)
-          - href: recipes-release.qmd
-            text: Release and supply chain (12)
       - href: roadmap.qmd
         text: Roadmap
       - href: contributing.qmd

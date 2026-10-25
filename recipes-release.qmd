@@ -6,7 +6,7 @@ The full ramp and the recipe form live on the [recipes index](recipes.html). Thi
 
 In this category: Recipe 12.
 
-## Recipe 12 — Verify a release: the SLSA provenance check before you deploy
+## Recipe 12 — Verify a release: the SLSA provenance check before you deploy {#recipe-12}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
