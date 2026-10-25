@@ -1,0 +1,61 @@
+---
+title: "Recipe 3 — Read the verdicts: the OTel record shape (`trishula.verdict.v1`)"
+---
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`cmd/trishula`](https://github.com/trishula-dev/trishula/tree/main/cmd/trishula), one command, any host with Go | Observability | easy | 5 min | engine · observability | verdicts, otel, parity |
+
+### Problem
+
+You want the verdict record fields. You want the action, the rule ids and the score per case.
+You want them without a dashboard or a cluster.
+
+### Solution
+
+1. Walk the ladder parity matrix. One command from a checkout:
+
+```bash
+go run ./cmd/trishula --parity
+```
+
+2. Read the printed verdict log. The three matrix cases carry the verdict vocabulary:
+
+```text
+verdict log (parity walk, S0+S3 slice):
+  case clean      action=allow    rules=[]                 score=0 [PASS]
+  case cel-match  action=log      rules=[TR02-001]         score=1 [PASS]
+  case kernel-ban action=ban      rules=[shield:ban:t2:r7] score=2 [PASS]
+parity OK
+```
+
+3. Read the record schema at [spec §15.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#152-the-verdict-record-log-body-schema-versioned).
+The record carries six fields: `request.id`, `verdict.action`, `verdict.phase`, `verdict.route`,
+`verdict.rules`, `verdict.score`.
+
+### Discussion
+
+The pipeline emits three correlated signals per verdict (TR-11): one span, one `verdicts_total`
+datapoint, one log record. One request id keys all three signals. The log record
+carries the event name `trishula.verdict` and an INFO severity. The signals are the
+record's source; the spec pins the schema. The parity walk prints the same
+verdict vocabulary the record carries.
+
+The v0 pipeline emits in-process, into an in-memory exporter. No collector and no
+network exporter ship at this pin. The parity walk is the reader surface.
+
+### See also
+
+- [spec §15](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#15-opentelemetry-observability) — the observability contract. [spec §15.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#152-the-verdict-record-log-body-schema-versioned) — the record schema.
+- [`internal/engine/otel/pipeline.go`](https://github.com/trishula-dev/trishula/blob/main/internal/engine/otel/pipeline.go) — the signal schema in code.
+- [TR-11 issue #11](https://github.com/trishula-dev/trishula/issues/11) — the verdict pipeline.
+- [Recipe 1 — the install path.](recipes-01-install-kind.html)
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, on the host clone:
+
+- `go run ./cmd/trishula --parity`: exit 0. The matrix read 3/3 `[PASS]` and printed `parity OK`.

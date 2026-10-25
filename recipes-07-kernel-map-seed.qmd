@@ -1,0 +1,58 @@
+---
+title: "Recipe 7 — Pre-seed the kernel maps from the operator bundle"
+---
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`test/route-e2e`](https://github.com/trishula-dev/trishula/tree/main/test/route-e2e), Linux VM, root, BTF | Kernel · operator | hard | 10 min | kernel · lpm | bundle, route class, verifier |
+
+### Problem
+
+You want the bundle's kernel leg loaded before traffic. You want the route-class
+LPM rows from the compiled policy.
+
+### Solution
+
+1. Run the route E2E (root, Linux, BTF present). `ROUTE_E2E_REQUIRED=1` turns
+every environment skip into a failure:
+
+```bash
+sudo env PATH="$PATH" HOME="$HOME" ROUTE_E2E_REQUIRED=1 \
+  go test -tags route_e2e -count=1 -v ./test/route-e2e/
+```
+
+2. Read the load proof. The suite compiles the full pathway and loads it under
+the kernel verifier:
+
+```text
+=== RUN   TestRouteClassLoadProofE2E
+--- PASS: TestRouteClassLoadProofE2E (<seconds>s)
+--- PASS: TestBundleShapeLoadGate (<seconds>s)
+--- PASS: TestBundleShapeGateNegatives (<seconds>s)
+PASS
+```
+
+### Discussion
+
+The pathway runs end to end. `WAFPolicy` compiles to a bundle. The bundle instantiates one verifier-accepted route-mark program with one LPM map. The map carries the compiled route prefixes as the pre-seeded rows. No
+netns and no traffic attach ride this proof: the gate is the verifier load plus
+the read-back. The census stamps each policy field kernel or slow path; the
+census record defines the boundary.
+
+The bundle shapes walk as a contract. A bundle that loses its kernel leg fails before the verifier sees it.
+
+### See also
+
+- [spec §16.4](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#164-lifecycle-of-trishula-in-a-cluster) — the lifecycle of Trishula in a cluster.
+- [`docs/design/socket-plane/4-compiler-census.md`](https://github.com/trishula-dev/trishula/blob/main/docs/design/socket-plane/4-compiler-census.md) — the census boundary.
+- [TR-40b issue #188](https://github.com/trishula-dev/trishula/issues/188) — the route-class end-to-end lane.
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, inside the sprint Linux VM (kernel `7.0.14-orbstack-00380`):
+
+- `ROUTE_E2E_REQUIRED=1 go test -tags route_e2e -count=1 -v ./test/route-e2e/`: exit 0.
+  `TestRouteClassLoadProofE2E`, `TestBundleShapeLoadGate`, `TestBundleShapeGateNegatives` all PASS.

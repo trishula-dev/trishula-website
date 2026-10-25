@@ -6,11 +6,18 @@ project:
     - "roadmap.qmd"
     - "building.qmd"
     - "recipes.qmd"
-    - "recipes-getting-started.qmd"
-    - "recipes-policy.qmd"
-    - "recipes-kernel.qmd"
-    - "recipes-crs-bench.qmd"
-    - "recipes-release.qmd"
+    - "recipes-01-install-kind.qmd"
+    - "recipes-02-first-policy.qmd"
+    - "recipes-03-verdict-records.qmd"
+    - "recipes-04-cel-budget.qmd"
+    - "recipes-05-crs-exclusions.qmd"
+    - "recipes-06-ban-ladder.qmd"
+    - "recipes-07-kernel-map-seed.qmd"
+    - "recipes-08-crs-differential-bench.qmd"
+    - "recipes-09-manual-ban.qmd"
+    - "recipes-10-dos-signature.qmd"
+    - "recipes-11-bot-challenge.qmd"
+    - "recipes-12-release-verify-slsa.qmd"
     - "agents.qmd"
     - "contributing.qmd"
     - "security.qmd"
@@ -32,32 +39,27 @@ website:
           href: recipes.qmd
           contents:
             - section: "Getting started"
-              href: recipes-getting-started.qmd
               contents:
-                - recipes-getting-started.qmd#recipe-1
-                - recipes-getting-started.qmd#recipe-2
-                - recipes-getting-started.qmd#recipe-3
+                - recipes-01-install-kind.qmd
+                - recipes-02-first-policy.qmd
+                - recipes-03-verdict-records.qmd
             - section: "Policy and rules"
-              href: recipes-policy.qmd
               contents:
-                - recipes-policy.qmd#recipe-4
-                - recipes-policy.qmd#recipe-9
-                - recipes-policy.qmd#recipe-11
+                - recipes-04-cel-budget.qmd
+                - recipes-09-manual-ban.qmd
+                - recipes-11-bot-challenge.qmd
             - section: "Kernel enforcement"
-              href: recipes-kernel.qmd
               contents:
-                - recipes-kernel.qmd#recipe-6
-                - recipes-kernel.qmd#recipe-7
-                - recipes-kernel.qmd#recipe-10
+                - recipes-06-ban-ladder.qmd
+                - recipes-07-kernel-map-seed.qmd
+                - recipes-10-dos-signature.qmd
             - section: "CRS and the bench"
-              href: recipes-crs-bench.qmd
               contents:
-                - recipes-crs-bench.qmd#recipe-5
-                - recipes-crs-bench.qmd#recipe-8
+                - recipes-05-crs-exclusions.qmd
+                - recipes-08-crs-differential-bench.qmd
             - section: "Release and supply chain"
-              href: recipes-release.qmd
               contents:
-                - recipes-release.qmd#recipe-12
+                - recipes-12-release-verify-slsa.qmd
         - href: agents.qmd
           text: Agents
         - href: contributing.qmd
@@ -87,6 +89,8 @@ website:
         text: Deployment
       - href: building.qmd
         text: Build
+      - href: recipes.qmd
+        text: Recipes
     right:
       - href: roadmap.qmd
         text: Roadmap

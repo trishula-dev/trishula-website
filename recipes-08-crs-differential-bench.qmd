@@ -1,0 +1,73 @@
+---
+title: "Recipe 8 — Run the CRS differential and the bench harness on your own node"
+---
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`lab/bench-vm.sh`](https://github.com/trishula-dev/trishula/blob/main/lab/bench-vm.sh) + [`test/crs-differential`](https://github.com/trishula-dev/trishula/tree/main/test/crs-differential), Linux VM, root | Bench | hard | 45 min | bench · crs | bench, budgets, walls |
+
+### Problem
+
+You want the full suite under the CI shape on the node you own. You want the
+verdict walls measured against the [spec §17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan)
+budgets, and the CRS posture re-checked on the same node.
+
+### Solution
+
+1. Run the CRS parity gate first (any host with Go):
+
+```bash
+go test ./test/crs-differential/ -run TestCorpusParity -count=1
+```
+
+2. Run the bench rig inside a Linux VM copy of the tree (root):
+
+```bash
+sudo bash lab/bench-vm.sh
+```
+
+3. Read the four sections the rig prints:
+
+```text
+== G: full suite, new CI shape (p 1 + no_regex_multiline)
+== H: old CI shape control (parallel, GOMAXPROCS=4)
+== I: bench verdict walls, new CI shape
+== J: prefilter-off control (same shape, directive removed)
+```
+
+The wall lines carry one row per measured scenario:
+
+```text
+MEASURED <scenario> n=<n> size=<bytes> p50=<us> p99=<us> budget=<name> (<budget-hint us>) factor=<x>x
+```
+
+### Discussion
+
+Section G runs the suite serialized (`-p 1`) with the `no_regex_multiline` build
+tag; the CI fleet runs this shape. Section H runs the parallel-shape control;
+the delta shows what the serialization buys. Section I measures the live-path verdict walls against the named budget. The `factor` value reads the wall at 1.00x. Section J removes the `SecRxPreFilter On`
+directive and re-measures; the delta prices the prefilter. The rig restores the
+directive on exit.
+
+A wall above 1.00x is a budget miss on your node. The hosted CI certifies the
+budgets; read the VM as the A and B surface. The parity gate from Recipe 5 rides
+the same tree: run it again after any rule or exclusion change.
+
+### See also
+
+- [spec §17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan) — the budgets and the benchmark plan. [spec §11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate) — the parity gate.
+- [The lab bench recipe](https://github.com/trishula-dev/trishula/blob/main/lab/README.md) — the lab surfaces.
+- [TR-24 issue #24](https://github.com/trishula-dev/trishula/issues/24) — the bench harness lane.
+- [Recipe 5 — the same parity gate with the exclusion probes.](recipes-05-crs-exclusions.html)
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, inside the sprint Linux VM:
+
+- The parity gate read green before the rig.
+- `bash lab/bench-vm.sh` ran the four sections inside the VM. The section I wall read
+  `MEASURED attack-sqli-small n=300 size=17 B p50=427.3 us p99=571.5 us budget=e2e-inline-hop-8k (1500 us) factor=0.38x`
+  against the `e2e-inline-hop-8k` budget.

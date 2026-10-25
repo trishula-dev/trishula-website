@@ -75,6 +75,16 @@ def parse_ramp(text: str) -> dict[int, str]:
     return ramp
 
 
+TITLE_HEAD = re.compile(r'(?m)^title:\s*["\']?Recipe (\d+) — (.+?)["\']?\s*(?:\{#recipe-\d+\})?\s*$')
+
+def page_recipe(text: str) -> tuple[int, str] | None:
+    """(n, title) when the page = a single-recipe page (the frontmatter's
+    title = 'Recipe N — ...'); else None."""
+    m = TITLE_HEAD.search(text)
+    if not m:
+        return None
+    return int(m.group(1)), re.sub(r"\s*\{#recipe-\d+}\s*$", "", m.group(2).strip())
+
 def check_page(path: Path, shared_ramp: dict[int, str] | None = None) -> list[str]:
     text = path.read_text(encoding="utf-8")
     v: list[str] = []
@@ -86,6 +96,38 @@ def check_page(path: Path, shared_ramp: dict[int, str] | None = None) -> list[st
 
     published = section_bodies(text)
     ramp = parse_ramp(text) or (shared_ramp or {})
+    # the recipe-page mode: no `## Recipe` H2 but the title names one = the
+    # page = the recipe (the segment = the whole body; the title = its name)
+    if not published:
+        pr = page_recipe(text)
+        if pr:
+            strip = next((l for l in b.splitlines() if re.match(r"\s*\|\s*Tool\s*\|", l)), None)
+            if not strip:
+                v.append(f"recipe {pr[0]}: no header strip (| Tool | ... row)")
+            else:
+                low = strip.lower()
+                for fld in STRIP_FIELDS:
+                    if not re.search(rf"\|\s*{fld}\s*\|", low):
+                        v.append(f"recipe {pr[0]}: header strip field missing: {fld}")
+            heads = {h.strip().lower() for h in re.findall(r"(?m)^### (.+)$", b)}
+            for s in REQUIRED_SECTIONS:
+                if s not in heads:
+                    v.append(f"recipe {pr[0]}: missing section: {s}")
+            if not (VERIFIED.search(b) and COMMIT_LINK.search(b) and DATE.search(b)):
+                v.append(f"recipe {pr[0]}: provenance footer missing (verified against + commit pin + date)")
+        if ramp and pr and pr[0] in ramp:
+            if ramp[pr[0]] != pr[1]:
+                v.append(f"ramp: recipe {pr[0]} title drift (ramp '{ramp[pr[0]]}' vs page '{pr[1]}')")
+        elif ramp and pr and pr[0] not in ramp:
+            v.append(f"ramp: published recipe {pr[0]} lands outside the planned ramp")
+        # the recipe-page mode's evidence check (the no-prompt-glyph rule)
+        for fm in re.finditer(r"```(?:bash|sh|console|shell|python|py)\n([\s\S]*?)```", b):
+            blk = fm.group(1)
+            for pat in PROMPT_GLYPHS:
+                if pat.search(blk):
+                    v.append("no-invented-evidence: prompt-glyph block")
+                    break
+        return v
 
     # 2. ramp cross-check
     for n, title, _ in published:
@@ -154,9 +196,12 @@ def run_gate(root: Path) -> list[tuple[str, list[str]]]:
     ramp_rows: dict[int, tuple[str, str]] = {}  # n → (page, title)
     for pp in pages:
         text = pp.read_text(encoding="utf-8")
-        ramp = parse_ramp(text)
         for n, title, _ in section_bodies(text):
             ramp_rows[n] = (pp.name, title)
+        # the recipe-page mode: the frontmatter's own title
+        pr = page_recipe(text)
+        if pr and pr[0] not in ramp_rows:
+            ramp_rows[pr[0]] = (pp.name, pr[1])
     shared = {n: t for (n, (pg, t)) in ramp_rows.items()} if ramp_rows else None
     for pp in pages:
         text = pp.read_text(encoding="utf-8")
