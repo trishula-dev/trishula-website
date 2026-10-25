@@ -4,7 +4,7 @@ title: "Roadmap"
 
 ## Project timeline
 
-Delivered scope spans inception to the 2026.01-rc1 release. Each step carries its tracking issue. Every item below closed as a tested pull request and verified by execution; the dates are the issue-close dates.
+Delivered scope spans inception to the 2026.01-rc3 release. Each step carries its tracking issue. Every item below closed as a tested pull request and verified by execution; the dates are the issue-close dates.
 
 **3 October — baseline**
 
@@ -34,6 +34,27 @@ Delivered scope spans inception to the 2026.01-rc1 release. Each step carries it
 - A route's published API schema acts as an allow-list: non-conforming requests are rejected with a diagnostic naming the violated field ([#13](https://github.com/trishula-dev/trishula/issues/13), [PR](https://github.com/trishula-dev/trishula/pull/102)).
 - The platform's limits are stated, not implied: the README exit checklist marks each acceptance criterion pass or pending with evidence links ([#14](https://github.com/trishula-dev/trishula/issues/14), [PR](https://github.com/trishula-dev/trishula/pull/108)). The release is signed and published ([2026.01-rc1](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc1)).
 
+**23 October — 2026.01-rc2**
+
+- Requests parse across HTTP/1.1, HTTP/2 and gRPC into one structured view ([#15](https://github.com/trishula-dev/trishula/issues/15), [PR](https://github.com/trishula-dev/trishula/pull/138)).
+- The CEL graph reloads rules on apply and holds each rule under its cost budget ([#17](https://github.com/trishula-dev/trishula/issues/17), [PR](https://github.com/trishula-dev/trishula/pull/134)).
+- Automated-client detection grows behavioural windows over the JA4 fingerprints ([#19](https://github.com/trishula-dev/trishula/issues/19)).
+- Rate limiting runs token-bucket, sliding-window and EWMA algorithms per route ([#20](https://github.com/trishula-dev/trishula/issues/20), [PR](https://github.com/trishula-dev/trishula/pull/141)).
+- The bench gate reads per-row budget verdicts in the serialized CI fleet ([#24](https://github.com/trishula-dev/trishula/issues/24), [PR](https://github.com/trishula-dev/trishula/pull/144), [#150](https://github.com/trishula-dev/trishula/pull/150)).
+- Release artefacts carry build-provenance attestations and an SBOM ([#81](https://github.com/trishula-dev/trishula/issues/81), [PR](https://github.com/trishula-dev/trishula/pull/139)). The release is signed and published ([2026.01-rc2](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc2)).
+
+**24 October — 2026.01-rc3**
+
+- Behavioural DoS detectors land as shadowed shapes: the kernel counts per-flow window features, the engine classifies slowloris and rapid-reset ([#31](https://github.com/trishula-dev/trishula/issues/31), [PR](https://github.com/trishula-dev/trishula/pull/225)).
+- The engine gains its TLS-termination secondary mode, fail-closed on a split pair ([#34](https://github.com/trishula-dev/trishula/issues/34), [PR](https://github.com/trishula-dev/trishula/pull/218)).
+- The build ships multi-arch with OpenShift compatibility notes ([#33](https://github.com/trishula-dev/trishula/issues/33), [PR](https://github.com/trishula-dev/trishula/pull/215)).
+- The uninstall residue gate asserts zero kernel leftovers after live teardown in CI ([#35](https://github.com/trishula-dev/trishula/issues/35), [PR](https://github.com/trishula-dev/trishula/pull/186)).
+- The socket-plane compiler lands its first class: route marking compiles end to end, the verifier gate runs in CI, the shadow differential pins the mismatch budget ([#52](https://github.com/trishula-dev/trishula/issues/52), PRs [#200](https://github.com/trishula-dev/trishula/pull/200), [#207](https://github.com/trishula-dev/trishula/pull/207), [#212](https://github.com/trishula-dev/trishula/pull/212)).
+- The declarative layer moves to CUE with a golden-diff gate against hand edits ([#46](https://github.com/trishula-dev/trishula/issues/192), [PR](https://github.com/trishula-dev/trishula/pull/222)).
+- The Academy ships modules 1, 3, 4 and 2, 5 ([#27](https://github.com/trishula-dev/trishula/issues/27), [#28](https://github.com/trishula-dev/trishula/issues/28), PRs [#178](https://github.com/trishula-dev/trishula/pull/178), [#210](https://github.com/trishula-dev/trishula/pull/210)).
+- The tracked evaluations publish: HTTP/3 ingress posture, the DPU port, the composition watch ([#29](https://github.com/trishula-dev/trishula/issues/29), [#32](https://github.com/trishula-dev/trishula/issues/32), [#36](https://github.com/trishula-dev/trishula/issues/36)).
+- The release is signed and published ([2026.01-rc3](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc3)).
+
 ## Roadmap
 
 Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) (org Project) as issues [TR-01 … TR-41](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion. The ladder reads proven end-to-end, not slide-by-slide.
@@ -41,9 +62,18 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 | Milestone | Items | Status |
 |---|---|---|
 | **2026.01-rc1 — DELIVERED** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit | **Phase 0 exit gate run** ([TR-14 PR](https://github.com/trishula-dev/trishula/pull/108)): shield loaders ([ed9b271](https://github.com/trishula-dev/trishula/commit/ed9b2714512ecad1bb6b0960eeeb7951e9693726)) · engine proxy + NGF lab ([75d8174](https://github.com/trishula-dev/trishula/commit/75d8174a921539184d8a7c12207d0a3d52005b09), [8bc24a2](https://github.com/trishula-dev/trishula/commit/8bc24a27d6b4e0ca839e22453f9c519a13e3000c)) · ladder ([b86cf6f](https://github.com/trishula-dev/trishula/commit/b86cf6f9a5bbff2903fe058980fed39e9f472ab6)) · CRS parity 19/19 ([ec19346](https://github.com/trishula-dev/trishula/commit/ec1934616317d966a42156c47cb394593779bf90)) · CRD round-trip 0.239 s ([e221c9f](https://github.com/trishula-dev/trishula/commit/e221c9f7938b84892d2ba66aecd87f850ef967eb)) · M9 apply→effect 2618 ms ([cb60e2b](https://github.com/trishula-dev/trishula/commit/cb60e2b0cd3463f84e72acf3d07356cacda66f2a)) · ban enforce E2E ([fdd32af](https://github.com/trishula-dev/trishula/commit/fdd32af7bc1f8b614fb3c82ea9b5806f61cb85ad)) · OTel triad ([e63d990](https://github.com/trishula-dev/trishula/commit/e63d990e4deef8e3ce9e0ed108987b80585dd47e)) · bots v0 ([c4f5e7e](https://github.com/trishula-dev/trishula/commit/c4f5e7e8bb766ee482aaae59ece5ffacc89020d1)) · positive v0 ([8f4c2f2](https://github.com/trishula-dev/trishula/commit/8f4c2f22d39ef52fe5633dafa6949cb47521bb14)) — per-criterion verdicts + evidence links in the [README exit checklist](https://github.com/trishula-dev/trishula#readme); the `<10 ms inline` criterion is **pending [TR-24](https://github.com/trishula-dev/trishula/issues/24)**, reported honestly |
-| **2026.01-rc2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_process, DX gate, bench, multi-tenancy, Envoy lane | next |
-| **2026.01-rc3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch | later |
+| **2026.01-rc2** ([release](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc2)) | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate-limit ladder, ONNX scorer, ext_process, DX gate, bench, multi-tenancy, Envoy lane | delivered 2026-10-23 |
+| **2026.01-rc3** ([release](https://github.com/trishula-dev/trishula/releases/tag/2026.01-rc3)) | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch | delivered 2026-10-24 |
 | **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): socket-plane L7 fast path study (Beeline), WAFPolicy→eBPF compiler spike, kernel-altitude TLS posture (kTLS vs no-key signals) | parked |
+## What is left
+
+The releases carry honest caps. The remaining gaps, stated:
+
+- The route-class fast path reads as a tracked evaluation; more policy classes ride later slices ([#52](https://github.com/trishula-dev/trishula/issues/52)).
+- Verdicts export OTLP over the wire later; the triad verifies in-memory today ([#11](https://github.com/trishula-dev/trishula/issues/11)).
+- Engine-only cells measure in CI today; inline walls under 10 ms ride the 2026.01 GA bucket ([#24](https://github.com/trishula-dev/trishula/issues/24)).
+- The next release is the GA cut: the bare `2026.01` name, per [ADR-0003](https://github.com/trishula-dev/trishula/blob/main/docs/adr/0003-release-naming.md).
+
 ## Sprint sequencing
 
 The 2026.01-rc1 sprint sequence: shield PoC → ingest → ladder slice → NGF steering lab → CRS differential → operator/CRD round-trip → ScoredWindowBan → OTel pipeline → bot v0 → positive security v0 → honest exit ([TR-14](https://github.com/trishula-dev/trishula/issues/14)).

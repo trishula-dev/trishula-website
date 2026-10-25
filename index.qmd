@@ -253,7 +253,7 @@ The audience: the application developer and platform engineer who runs Kubernete
 
 ## Roadmap
 
-Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) as issues [TR-01 … TR-41](https://github.com/trishula-dev/trishula/issues) in the `trishula` repo. Every issue lands a runnable artefact with an exit criterion. The records prove the ladder end to end.
+Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) as issues in the [`trishula` repo](https://github.com/trishula-dev/trishula/issues). Every issue lands a runnable artefact with an exit criterion. The records prove the ladder end to end.
 
 | Milestone | Items |
 |---|---|
