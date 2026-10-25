@@ -1,0 +1,237 @@
+---
+title: "Recipes — Kernel enforcement"
+---
+
+The full ramp and the recipe form live on the [recipes index](recipes.html). This page carries the worked recipes for this category.
+
+In this category: Recipe 6, Recipe 7, Recipe 10.
+
+## Recipe 6 — Run the ban ladder: ScoredWindowBan shadow, then enforce
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`lab/demo-attack.sh`](https://github.com/trishula-dev/trishula/blob/main/lab/demo-attack.sh), Linux VM, root, BTF | Enforcement | hard | 20 min | kernel · bans | bans, tc, TC_ACT_SHOT |
+
+### Problem
+
+You want the ban path end to end on a Linux node. You want the scored window as the shadow input. You want one ban row in the kernel map. You want the attacker source dead.
+
+### Solution
+
+1. Build the demo binary. Place the flow object; it ships committed:
+
+```bash
+cp test/tier/tier_probe_arm64_bpfel.o /tmp/flow_tc.o   # arm64; x86: tier_probe_x86_bpfel.o
+go build -o /tmp/attackdemo ./cmd/attackdemo
+```
+
+2. Give the harness an HTTP target for its wire legs. A plain HTTP server on the
+same port answers them:
+
+```bash
+printf '#!/bin/sh\nIP="${1%%:*}"; PORT="${1##*:}"\nexec python3 -m http.server --bind "$IP" "$PORT"\n' > /tmp/tfo
+chmod +x /tmp/tfo
+```
+
+3. Run the demo (root, Linux, kernel 5.15+, BTF present):
+
+```bash
+sudo env DEMO_BIN=/tmp/attackdemo ./lab/demo-attack.sh
+```
+
+4. Read the shadow legs, then the enforcement leg:
+
+```text
+bola:     object=2002 owner=tenant-b subject=tenant-a → BLOCK (API1:2023 BOLA)
+cel:      GET /api/v1/orders/2002 rate=1/5m → match=false cost=3
+ban:      [10.99.0.66] family=4 class=0 tier=1 reason=4211 until=mono+120s
+wire:    replay result: <timeout or refused> (the kernel answered, not the app)
+```
+
+### Discussion
+
+The demo drives three decision inputs and one enforcement leg. The CRS payload
+prints the S2 negative-security verdicts. The BOLA case prints the S3
+positive-security record. The `cel` leg prints the S3 rate rule over the same
+view — the scoring input the ban ladder reads. The `ban` leg seeds one source ban through the loader ABI. A `BanVal` carries tier, reason code and a monotonic deadline. The value lands in the kernel map. The replay through the same flow dies in
+TC before userspace (`TC_ACT_SHOT`).
+
+The thresholds and tiers live in [spec §13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified).
+This recipe drives the enforcement leg and the map evidence; the full decider
+census reads in the same section.
+
+### See also
+
+- [spec §13](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#13-rate-limiting-dos-response--temporary-bans) — rate limits, DoS, bans. [spec §13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) — ScoredWindowBan.
+- [`docs/demo.md`](https://github.com/trishula-dev/trishula/blob/main/docs/demo.md) — the demo's honesty table.
+- [Issue #83](https://github.com/trishula-dev/trishula/issues/83) — the recorded attack-demo transcripts.
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, inside the sprint Linux VM (kernel `7.0.14-orbstack-00380`, bpftool v7.4.0):
+
+- The demo ran exit 0 at the pin. The program loaded and attached on the veth pair; the four maps pinned.
+- The ban row landed in the map (`family=4 class=0 tier=1 reason=4211`). The replay after the ban
+  read the kernel answer, not the app.
+
+
+## Recipe 7 — Pre-seed the kernel maps from the operator bundle
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`test/route-e2e`](https://github.com/trishula-dev/trishula/tree/main/test/route-e2e), Linux VM, root, BTF | Kernel · operator | hard | 10 min | kernel · lpm | bundle, route class, verifier |
+
+### Problem
+
+You want the bundle's kernel leg loaded before traffic. You want the route-class
+LPM rows from the compiled policy.
+
+### Solution
+
+1. Run the route E2E (root, Linux, BTF present). `ROUTE_E2E_REQUIRED=1` turns
+every environment skip into a failure:
+
+```bash
+sudo env PATH="$PATH" HOME="$HOME" ROUTE_E2E_REQUIRED=1 \
+  go test -tags route_e2e -count=1 -v ./test/route-e2e/
+```
+
+2. Read the load proof. The suite compiles the full pathway and loads it under
+the kernel verifier:
+
+```text
+=== RUN   TestRouteClassLoadProofE2E
+--- PASS: TestRouteClassLoadProofE2E (<seconds>s)
+--- PASS: TestBundleShapeLoadGate (<seconds>s)
+--- PASS: TestBundleShapeGateNegatives (<seconds>s)
+PASS
+```
+
+### Discussion
+
+The pathway runs end to end. `WAFPolicy` compiles to a bundle. The bundle instantiates one verifier-accepted route-mark program with one LPM map. The map carries the compiled route prefixes as the pre-seeded rows. No
+netns and no traffic attach ride this proof: the gate is the verifier load plus
+the read-back. The census stamps each policy field kernel or slow path; the
+census record defines the boundary.
+
+The bundle shapes walk as a contract. A bundle that loses its kernel leg fails before the verifier sees it.
+
+### See also
+
+- [spec §16.4](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#164-lifecycle-of-trishula-in-a-cluster) — the lifecycle of Trishula in a cluster.
+- [`docs/design/socket-plane/4-compiler-census.md`](https://github.com/trishula-dev/trishula/blob/main/docs/design/socket-plane/4-compiler-census.md) — the census boundary.
+- [TR-40b issue #188](https://github.com/trishula-dev/trishula/issues/188) — the route-class end-to-end lane.
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, inside the sprint Linux VM (kernel `7.0.14-orbstack-00380`):
+
+- `ROUTE_E2E_REQUIRED=1 go test -tags route_e2e -count=1 -v ./test/route-e2e/`: exit 0.
+  `TestRouteClassLoadProofE2E`, `TestBundleShapeLoadGate`, `TestBundleShapeGateNegatives` all PASS.
+
+
+## Recipe 10 — Watch the dynamic DoS signature: the shield runner end to end
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`cmd/shield/`](https://github.com/trishula-dev/trishula/tree/main/cmd/shield) · [`internal/shield/`](https://github.com/trishula-dev/trishula/tree/main/internal/shield) | Detection | hard | 15 min | kernel + engine | DoS, slowloris, signature, TR-195 |
+
+### Problem
+
+A slowloris trickle walks one flow; no request ever looks bad alone. You
+want the kernel-side counters to catch the shape, publish a ban and cite
+the same measured facts in evidence and telemetry.
+
+### Solution
+
+The runner reads the pinned `flow_stats` map, forms the cue from the
+flow window and drives the scored ban path. The signature states what the
+flow carried: the segment count, the bytes per segment and the span.
+
+1. Run the shield demo in the lab netns (the lab owns the pins and the
+   netns; the runner reads the same pins the programs write):
+
+```bash
+bash lab/demo.sh          # brings the veth pair, the tc hook and the pins up
+sudo ./shield --flow-stats /sys/fs/bpf/trishula/flow_stats \
+              --bans-v4 /sys/fs/bpf/trishula/bans_v4 -interval 2s
+```
+
+2. Drive the trickle from the client netns. Thirty tiny frames, one per
+   second and a bit, one flow:
+
+```text
+segs >= 24 · bytes/seg <= 64 · span >= 30 s
+```
+
+3. Read the would-ban the runner writes to the evidence JSONL:
+
+```bash
+tail -1 /tmp/tr195/dos_runner_evidence.jsonl
+```
+
+```text
+{"key":"10.77.0.66","verdict":"would-ban","tier":"scored-window",
+ "osig":{"class":"slowloris_suspect","segs":30,"bytesPerSeg":9,"spanSec":34}}
+```
+
+4. Read the same facts in telemetry. The engine emits `verdict.dos.sig`
+   on the verdict record; every flow-keyed would-ban carries a
+   `trishula.ban` record (`ban.key`, `ban.tier`, `ban.score`,
+   `ban.reason`) — the pipeline test pins both shapes.
+
+5. Watch the kernel row stop the next attempt. After the crossing the
+   offender's packet dies at the XDP ban program; a replay connect to the
+   shield answers with silence (the in-VM acceptance records exactly this
+   chain on [#253](https://github.com/trishula-dev/trishula/issues/253)).
+
+6. Tune: the detector floors live in
+   [`internal/engine/rateban/dos.go`](https://github.com/trishula-dev/trishula/blob/main/internal/engine/rateban/dos.go)
+   (`SlowlorisMinSegs` = 24, `SlowlorisMaxBytesPerSeg` = 64,
+   `SlowlorisMinSpanSec` = 30). The cue weights live in the ban weights
+   table (`kernelBurstFlag` = 3 points). Four cues per source cross the
+   threshold of 10.
+
+### Discussion
+
+The runner = the automation the spec promises: the map read, the cue, the
+scored evidence, the enforcer publish — one sweep at a time on an
+interval. Fail-open holds: a failed read or write surfaces, the packets
+keep passing, the interval retries.
+
+The signature is one object on three surfaces: the cue note, the evidence
+row (`osig`) and the verdict record (`verdict.dos.sig`). The in-VM
+acceptance proves the chain against a live kernel: the paced trickle, the
+4-sweep crossing, the XDP drop and the replay dying at the NIC.
+
+The rapid-reset shape (h2) scores through the same ban path; its cue
+carries the same signature layout with the reset ratio in place of the
+segment shape.
+
+### See also
+
+- [spec §13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — who does what. [spec §9.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#93-maps-and-state) — the maps the runner reads.
+- [Issue #253](https://github.com/trishula-dev/trishula/issues/253) — the in-VM acceptance receipt.
+- [PR #249](https://github.com/trishula-dev/trishula/pull/249) — the runner. [PR #250](https://github.com/trishula-dev/trishula/pull/250) — the signature on the records.
+- [Recipe 9 — the manual path for the same ban row.](recipes-policy.html)
+- Recipe 6 above — the scored ladder the cues feed.
+
+### Provenance
+
+Verified against [trishula@798beb1](https://github.com/trishula-dev/trishula/commit/aac9da071568c1eed4977cea1623a0c642b21992)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25, inside the sprint Linux VM (OrbStack
+trishula-build-dev, arm64):
+
+- `go test -run TestDoSRunnerE2E ./test/dosrunner/`: the paced trickle, the
+  4-sweep crossing (`bans_v4[10.77.0.66] = {until_ms=…, score=1200,
+  reason_code=1300}`), the banned ping dead at XDP, the replay dead at the
+  NIC, the evidence JSONL carrying the sig — the verbatim transcript sits
+  on [#253](https://github.com/trishula-dev/trishula/issues/253).

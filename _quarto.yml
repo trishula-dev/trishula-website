@@ -6,6 +6,11 @@ project:
     - "roadmap.qmd"
     - "building.qmd"
     - "recipes.qmd"
+    - "recipes-getting-started.qmd"
+    - "recipes-policy.qmd"
+    - "recipes-kernel.qmd"
+    - "recipes-crs-bench.qmd"
+    - "recipes-release.qmd"
     - "agents.qmd"
     - "contributing.qmd"
     - "security.qmd"
@@ -33,9 +38,21 @@ website:
         text: Deployment
       - href: building.qmd
         text: Build
-      - href: recipes.qmd
-        text: Recipes
     right:
+      - text: Recipes
+        menu:
+          - href: recipes.qmd
+            text: All recipes
+          - href: recipes-getting-started.qmd
+            text: Getting started (1–3)
+          - href: recipes-policy.qmd
+            text: Policy and rules (4, 9, 11)
+          - href: recipes-kernel.qmd
+            text: Kernel enforcement (6, 7, 10)
+          - href: recipes-crs-bench.qmd
+            text: CRS and the bench (5, 8)
+          - href: recipes-release.qmd
+            text: Release and supply chain (12)
       - href: roadmap.qmd
         text: Roadmap
       - href: contributing.qmd

@@ -72,7 +72,7 @@ def parse_ramp(text: str) -> dict[int, str]:
     return ramp
 
 
-def check_page(path: Path) -> list[str]:
+def check_page(path: Path, shared_ramp: dict[int, str] | None = None) -> list[str]:
     text = path.read_text(encoding="utf-8")
     v: list[str] = []
     b = body(text)
@@ -82,7 +82,7 @@ def check_page(path: Path) -> list[str]:
         v.append("single-h1: body H1 present (the YAML title is the only H1)")
 
     published = section_bodies(text)
-    ramp = parse_ramp(text)
+    ramp = parse_ramp(text) or (shared_ramp or {})
 
     # 2. ramp cross-check
     for n, title, _ in published:
@@ -117,12 +117,14 @@ def check_page(path: Path) -> list[str]:
                     v.append(f"recipe {n}: no-invented-evidence: prompt-glyph block ({pat.pattern[:20]})")
                     break
 
-    # 6. PENDING span vs published set
+    # 6. PENDING span vs published set (the page's OWN ramp only; a
+    # shared, cross-page ramp = the index owns the pending housekeeping)
+    own_ramp = parse_ramp(text)
     tail = b[-800:]
     m = PENDING_SPAN.search(tail)
     published_ns = {n for n, _, _ in published}
-    unworked = {n for n in ramp if n not in published_ns}
-    if ramp and m:
+    unworked = {n for n in own_ramp if n not in published_ns}
+    if own_ramp and m:
         lo, hi = int(m.group(1)), int(m.group(2))
         span_ns = {n for n in ramp if lo <= n <= hi}
         clash = span_ns & published_ns
@@ -131,7 +133,7 @@ def check_page(path: Path) -> list[str]:
         dropped = unworked - span_ns
         if dropped:
             v.append(f"pending-ownership: unworked ramp recipes {sorted(dropped)} sit outside the PENDING span {lo} to {hi}")
-    elif ramp and unworked:
+    elif own_ramp and unworked:
         v.append("pending-ownership: the ramp carries unworked plans but no closing PENDING span")
 
     return v
@@ -141,7 +143,49 @@ def run_gate(root: Path) -> list[tuple[str, list[str]]]:
     pages = sorted(root.glob("recipes*.qmd"))
     if not pages:
         return [(str(root), ["no recipes*.qmd page found"])]
-    return [(p.name, check_page(p)) for p in pages]
+    # Two-page shapes in one root: an index page (carries the ramp, no
+    # recipes) + category pages (carry the recipes). The ramp cross-check
+    # runs cross-page: every ramp row must publish SOMEWHERE under the
+    # root; an index page must not re-publish recipes its ramp worked.
+    results: list[tuple[str, list[str]]] = []
+    ramp_rows: dict[int, tuple[str, str]] = {}  # n → (page, title)
+    for pp in pages:
+        text = pp.read_text(encoding="utf-8")
+        ramp = parse_ramp(text)
+        for n, title, _ in section_bodies(text):
+            ramp_rows[n] = (pp.name, title)
+    shared = {n: t for (n, (pg, t)) in ramp_rows.items()} if ramp_rows else None
+    for pp in pages:
+        text = pp.read_text(encoding="utf-8")
+        ramp = parse_ramp(text)
+        published = section_bodies(text)
+        if ramp and not published:
+            # the index page: the ramp's rows must all publish elsewhere
+            for n, rtitle in ramp.items():
+                if n not in ramp_rows:
+                    results.append((pp.name, [f"ramp: recipe {n} '{rtitle}' publishes nowhere under this root"]))
+                elif ramp_rows[n][1] != rtitle:
+                    results.append((pp.name, [f"ramp: recipe {n} title drift ({ramp_rows[n][0]} '{ramp_rows[n][1]}' vs ramp '{rtitle}')"]))
+            idx = check_index(pp)
+            results.append((pp.name, idx))
+            continue
+        results.append((pp.name, check_page(pp, shared_ramp=shared)))
+    return results
+
+
+def check_index(path: Path) -> list[str]:
+    """The index page's own checks: the H1, the PENDING span, the links."""
+    text = path.read_text(encoding="utf-8")
+    b = body(text)
+    v: list[str] = []
+    if re.search(r"(?m)^# \S", unfenced(b)):
+        v.append("single-h1: body H1 present (the YAML title is the only H1)")
+    # every category page the index cites must exist next to it
+    for m in re.finditer(r"\]\((recipes[a-z0-9-]*\.html)\)", b):
+        target = m.group(1).replace(".html", ".qmd")
+        if not (path.parent / target).exists():
+            v.append(f"categories: the index cites {target}, which does not exist")
+    return v
 
 
 def main() -> int:
@@ -162,7 +206,7 @@ def main() -> int:
         for f in failures:
             print("  -", f)
         return 1
-    print(f"recipe-gate: GREEN ({n_pages} page checked)")
+    print(f"recipe-gate: GREEN ({n_pages} page(s) checked)")
     return 0
 
 

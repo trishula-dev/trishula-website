@@ -1,0 +1,35 @@
+---
+title: "R — Deep"
+---
+
+the deep page carries recipe 2 (title drifted on purpose)
+
+## Recipe 2 — Apply your first WAF policy but named differently
+
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`lab/dx1/`](https://github.com/trishula-dev/trishula/tree/main/lab/dx1) | Getting started | easy | 15 min | gateway + engine | install |
+
+### Problem
+
+You want one enforced verdict.
+
+### Solution
+
+```bash
+bash lab/dx1/dx1-gate.sh
+```
+
+### Discussion
+
+The gate times the first enforced rule.
+
+### See also
+
+- [The DX1 lab README](https://github.com/trishula-dev/trishula/blob/main/lab/dx1/README.md).
+
+### Provenance
+
+Verified against [trishula@10df4bee](https://github.com/trishula-dev/trishula/commit/10df4bee4775c973a0321b5398b9cdb5addffa59)
+on main, 2026-10-25.
