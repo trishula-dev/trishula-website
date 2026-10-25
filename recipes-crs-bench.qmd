@@ -6,7 +6,7 @@ The full ramp and the recipe form live on the [recipes index](recipes.html). Thi
 
 In this category: Recipe 5, Recipe 8.
 
-## Recipe 5 — Tune the CRS exclusion set without dropping the reference posture
+## Recipe 5 — Tune the CRS exclusion set without dropping the reference posture {#recipe-5}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
@@ -77,7 +77,7 @@ Smoke run, 2026-10-25, on the host clone:
 - Restore: parity green again. The tree reads clean after restore.
 
 
-## Recipe 8 — Run the CRS differential and the bench harness on your own node
+## Recipe 8 — Run the CRS differential and the bench harness on your own node {#recipe-8}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|

@@ -6,7 +6,7 @@ The full ramp and the recipe form live on the [recipes index](recipes.html). Thi
 
 In this category: Recipe 1, Recipe 2, Recipe 3.
 
-## Recipe 1 — Install Trishula on a kind cluster and see the first verdict
+## Recipe 1 — Install Trishula on a kind cluster and see the first verdict {#recipe-1}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
@@ -108,7 +108,7 @@ Smoke run, 2026-10-24, on the OrbStack-provided Kubernetes provider with NGF 1.6
 The gate composes the same three legs. No separate gate run is recorded.
 
 
-## Recipe 2 — Apply your first WAFPolicy: CR plus one curl, the verdict line
+## Recipe 2 — Apply your first WAFPolicy: CR plus one curl, the verdict line {#recipe-2}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
@@ -219,7 +219,7 @@ Smoke run, 2026-10-25, on the OrbStack-provided Kubernetes provider with NGF 1.6
 - The engine log carried the same decision line.
 
 
-## Recipe 3 — Read the verdicts: the OTel record shape (`trishula.verdict.v1`)
+## Recipe 3 — Read the verdicts: the OTel record shape (`trishula.verdict.v1`) {#recipe-3}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|

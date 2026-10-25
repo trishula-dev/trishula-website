@@ -6,7 +6,7 @@ The full ramp and the recipe form live on the [recipes index](recipes.html). Thi
 
 In this category: Recipe 6, Recipe 7, Recipe 10.
 
-## Recipe 6 — Run the ban ladder: ScoredWindowBan shadow, then enforce
+## Recipe 6 — Run the ban ladder: ScoredWindowBan shadow, then enforce {#recipe-6}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
@@ -78,7 +78,7 @@ Smoke run, 2026-10-25, inside the sprint Linux VM (kernel `7.0.14-orbstack-00380
   read the kernel answer, not the app.
 
 
-## Recipe 7 — Pre-seed the kernel maps from the operator bundle
+## Recipe 7 — Pre-seed the kernel maps from the operator bundle {#recipe-7}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
@@ -136,7 +136,7 @@ Smoke run, 2026-10-25, inside the sprint Linux VM (kernel `7.0.14-orbstack-00380
   `TestRouteClassLoadProofE2E`, `TestBundleShapeLoadGate`, `TestBundleShapeGateNegatives` all PASS.
 
 
-## Recipe 10 — Watch the dynamic DoS signature: the shield runner end to end
+## Recipe 10 — Watch the dynamic DoS signature: the shield runner end to end {#recipe-10}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|

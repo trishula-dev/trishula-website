@@ -6,7 +6,7 @@ The full ramp and the recipe form live on the [recipes index](recipes.html). Thi
 
 In this category: Recipe 4, Recipe 9, Recipe 11.
 
-## Recipe 4 — Write a CEL rule at S3 with a cost budget
+## Recipe 4 — Write a CEL rule at S3 with a cost budget {#recipe-4}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
@@ -85,7 +85,7 @@ Smoke run, 2026-10-25, on the host clone:
 - `go test ./internal/operator -run TestLoadRejectsUnusableDeclaredBudget -count=1`: ok.
 
 
-## Recipe 9 — Ban an offender manually: a CEL rule with `action: ban`
+## Recipe 9 — Ban an offender manually: a CEL rule with `action: ban` {#recipe-9}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
@@ -194,7 +194,7 @@ Smoke run, 2026-10-25:
   transcript.
 
 
-## Recipe 11 — Enable bot detection and the challenge: the consensus verdict, the redirect, the proof
+## Recipe 11 — Enable bot detection and the challenge: the consensus verdict, the redirect, the proof {#recipe-11}
 
 | Tool | Section | Level | Time | Layer | Tags |
 |---|---|---|---|---|---|
