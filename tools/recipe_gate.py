@@ -53,12 +53,15 @@ def unfenced(text: str) -> str:
 
 
 def section_bodies(text: str) -> list[tuple[int, str, str]]:
-    """[(n, title, segment)] for every `## Recipe N — <title>` section."""
+    """[(n, title, segment)] for every `## Recipe N — <title> {#recipe-N}` section.
+    The explicit anchor suffix (`{#recipe-N}`) strips from the title: the
+    title = the human text only, the ramp compares human text."""
     out = []
     heads = list(RECIPE_HEAD.finditer(text))
     for i, m in enumerate(heads):
         seg_end = heads[i + 1].start() if i + 1 < len(heads) else len(text)
-        out.append((int(m.group(1)), m.group(2).strip(), text[m.start():seg_end]))
+        title = re.sub(r"\s*\{#recipe-\d+}\s*$", "", m.group(2).strip())
+        out.append((int(m.group(1)), title, text[m.start():seg_end]))
     return out
 
 
