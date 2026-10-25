@@ -5,7 +5,7 @@ title: "Recipes"
 Recipes are short task pages. Each recipe solves one task. Each recipe ends with a check you can run.
 The recipes rise in difficulty. Recipe 1 installs Trishula on a local Docker provider and reads the first verdict.
 Recipe 2 applies a WAFPolicy and reads the verdict line.
-Recipes 3 to 10 carry the advanced lanes: verdicts, budgets, exclusions, bans, kernel maps, the bench, the manual ban rule and the shield runner.
+Recipes 3 to 12 carry the advanced lanes: verdicts, budgets, exclusions, bans, kernel maps, the bench, the manual ban rule, the shield runner, the challenge and the release verification.
 
 ## The recipe ramp
 
@@ -24,6 +24,8 @@ A planned recipe stays PENDING until a worked pin and a smoke run exist.
 | 8 | Run the CRS differential and the bench harness on your own node | hard | [§11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate), [§17](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#17-performance-targets--benchmark-plan) |
 | 9 | Ban an offender manually: a CEL rule with `action: ban` | medium | [§13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what), [§13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) |
 | 10 | Watch the dynamic DoS signature: the shield runner end to end | hard | [§13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what), [§9.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#93-maps-and-state) |
+| 11 | Enable bot detection and the challenge: the consensus verdict, the redirect, the proof | medium | [§12.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#122-verdict-integration), [§13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) |
+| 12 | Verify a release: the SLSA provenance check before you deploy | easy | [SECURITY.md](https://github.com/trishula-dev/trishula/blob/main/SECURITY.md), the attest chain (TR-81) |
 
 ## The recipe form
 
@@ -870,3 +872,195 @@ trishula-build-dev, arm64):
   reason_code=1300}`), the banned ping dead at XDP, the replay dead at the
   NIC, the evidence JSONL carrying the sig — the verbatim transcript sits
   on [#253](https://github.com/trishula-dev/trishula/issues/253).
+
+## Recipe 11 — Enable bot detection and the challenge: the consensus verdict, the redirect, the proof
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`internal/engine/botdef/`](https://github.com/trishula-dev/trishula/tree/main/internal/engine/botdef) · [`cmd/engine/`](https://github.com/trishula-dev/trishula/tree/main/cmd/engine) | Enforcement | medium | 10 min | policy + engine | bot, challenge, TR-197 |
+
+### Problem
+
+A credential-stuffing bot spreads login attempts across one source: no single
+request carries a bad string. You want one response for it: a wall that costs
+the client work, not a permanent ban. You want evidence of what answered.
+
+### Solution
+
+Two surfaces ship the flow: the detector consensus resolves `challenge`
+(two distinct families at or above the confidence floor), and the engine
+answers with a signed redirect that costs one small hash probe.
+
+1. Generate the signing key and start the engine with it. No key = the
+   challenge verdict refuses (the gate never pretends to challenge):
+
+```bash
+CHALLENGE_KEY=$(openssl rand -hex 32)
+./engine --upstream http://app:8080 \
+         --bundle /etc/trishula/bundle.json \
+         --challenge-key "$CHALLENGE_KEY" -listen :8080
+```
+
+2. Point the policy at the wall. The CRD carries the action today:
+   `defaultAction: challenge`, or the bot consensus resolves it when two
+   detector families agree per source:
+
+```yaml
+spec:
+  defaultAction: challenge
+```
+
+3. Probe. The consensus verdict answers `429` with the redirect:
+
+```bash
+curl -s -i "http://<gateway>/v1/chat/completions"
+```
+
+```text
+HTTP/1.1 429 Too Many Requests
+Location: /__trishula/challenge?token=<payload>.<hmac>
+X-Trishula-Decision: challenge
+```
+
+4. Read the problem. The hop prints the signed probe: the salt, the
+   difficulty, the problem token. Nothing is consumed by reading it:
+
+```bash
+curl -s "http://<gateway>/__trishula/challenge?token=<tok>"
+```
+
+```text
+problem-token=<tok>
+salt=<hex>
+diff=16
+```
+
+5. Solve. The nonce whose `sha256(salt:nonce)` starts with 16 zero bits
+   is the answer; ~65k hashes, under a second on a laptop. The solve
+   consumes both tokens once and grants the pass cookie:
+
+```text
+challenge verified; retry the original request
+Set-Cookie: trishula_pass=<token>; HttpOnly; Max-Age=600
+```
+
+6. Retry the original request with the cookie. The consult reads the
+   grant back and forwards the request for the cookie's TTL. A client
+   that never solves stays on the wall: every attempt re-answers `429`.
+
+### Discussion
+
+The token = the payload + the HMAC-SHA256 over it. The expiry lives in
+the payload (a 10-minute TTL); a nonce marks one-shot use: a consumed
+token refuses the second solve. A tampered payload, a dropped byte or a
+wrong key refuses with the named reason in the hop's log. A past-expiry
+token refuses identically — the exit criterion "the replay beyond the
+TTL refuses" holds two ways.
+
+Fail-open stays off here on purpose: a challenge that cannot mint is a
+deterministic `403`, never a silent pass. The proof probe stays small by
+default (16 bits); the difficulty is a constant in
+[`internal/engine/challenge/eow.go`](https://github.com/trishula-dev/trishula/blob/main/internal/engine/challenge/eow.go)
+until the CRD knob ships.
+
+### See also
+
+- [spec §12.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#122-verdict-integration) — the challenge verdict in the ladder.
+- [spec §13.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#137-dos-response-posture-who-does-what) — where the challenge sits beside the ban path.
+- [Issue #239](https://github.com/trishula-dev/trishula/issues/239) — the stream. [PR #256](https://github.com/trishula-dev/trishula/pull/256) · [PR #258](https://github.com/trishula-dev/trishula/pull/258) — the leaves.
+- Recipe 9 above — the manual `action: ban` for the confirmed offender.
+
+### Provenance
+
+Verified against [trishula@97206190](https://github.com/trishula-dev/trishula/commit/97206190ed003e5eea8d62aeb750e42545f99c83)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25:
+
+- `go test ./internal/engine/challenge/`: the mint/verify round trip, the
+  expiry, the tamper and the wrong key, the one-shot replay, the peek
+  non-consumption, the work-growth pin.
+- `go test ./cmd/engine/ -run TestChallenge`: the 429 + the redirect, the
+  verified hop, the tampered hop, the no-key refusal.
+- `go test ./cmd/engine/ -run TestEvidenceOfWork`: the full flow — the
+  problem, the wrong answer, the solve, the pass cookie, the forwarded
+  retry, the un-solved retry bouncing.
+- CI: run [40172145425](https://github.com/trishula-dev/trishula/actions/runs/40172145425)
+  green on [PR #258](https://github.com/trishula-dev/trishula/pull/258).
+
+## Recipe 12 — Verify a release: the SLSA provenance check before you deploy
+
+| Tool | Section | Level | Time | Layer | Tags |
+|---|---|---|---|---|---|
+| [`gh attestation`](https://cli.github.com/manual/gh_attestation_verify) · [`release-attest.yml`](https://github.com/trishula-dev/trishula/blob/main/.github/workflows/release-attest.yml) | Supply chain | easy | 3 min | release | SLSA, attestation, supply-chain, TR-81 |
+
+### Problem
+
+You downloaded a Trishula release asset. You want proof of what built it:
+which workflow, from which commit, signed by whom. You want that proof
+before the binary runs anywhere.
+
+### Solution
+
+Every release asset carries two attestations the moment the release
+publishes: the SLSA provenance (`https://slsa.dev/provenance/v1`) and the
+SPDX SBOM (`https://spdx.dev/Document/v2.3`). Both are Rekor-backed
+Sigstore bundles.
+
+1. Verify one asset:
+
+```bash
+gh attestation verify trishula-engine-linux-arm64 -R trishula-dev/trishula
+```
+
+2. Read what a bundle states. The attestation API returns the full
+   envelope per digest; the provenance names the builder and the run:
+
+```text
+builder.id  = https://github.com/trishula-dev/trishula/.github/workflows/release-attest.yml@refs/heads/main
+buildType   = https://actions.github.io/buildtypes/workflow/v1
+invocation  = https://github.com/trishula-dev/trishula/actions/runs/<run-id>
+```
+
+3. Check the count matches the release. The rc3 asset
+   `ban_enforce_arm64_bpfel.o` (sha256 `cad16bcf…`) carried 6 provenance
+   + 6 SBOM bundles (the attest runs re-run per re-attest; every bundle
+   verifies independently).
+
+4. Verify in bulk before deploying a fleet:
+
+```bash
+gh release download <tag> -R trishula-dev/trishula -D assets
+for f in assets/*; do gh attestation verify "$f" -R trishula-dev/trishula; done
+```
+
+### Discussion
+
+The verification runs offline-grade: the bundle carries the Rekor
+inclusion promise and proof; `gh attestation verify` checks the Sigstore
+trust root. A failed verify = the asset does not match what CI built —
+do not deploy it, file it. The SHA in `checksums.txt` pins the bytes;
+the attestation pins the producer. Both must hold.
+
+The GA cut notes carry this block per the release rule; the verify
+command runs the same on every future tag.
+
+### See also
+
+- [.github/workflows/release-attest.yml](https://github.com/trishula-dev/trishula/blob/main/.github/workflows/release-attest.yml) — the attest job.
+- [SECURITY.md](https://github.com/trishula-dev/trishula/blob/main/SECURITY.md) — what the release artefacts carry.
+- [Issue #120](https://github.com/trishula-dev/trishula/issues/120) (TR-81) — the attestation lane.
+- [Issue #260](https://github.com/trishula-dev/trishula/issues/260) — resolved CI-seating note (one PR, one branch).
+
+### Provenance
+
+Verified against [trishula@97206190](https://github.com/trishula-dev/trishula/commit/97206190ed003e5eea8d62aeb750e42545f99c83)
+on main, 2026-10-25.
+
+Smoke run, 2026-10-25:
+
+- `gh attestation verify /tmp/ban_enforce_arm64_bpfel.o -R trishula-dev/trishula`
+  on the `2026.01-rc3` asset: exit 0.
+- The attestation API read 12 bundles for the asset sha: 6 provenance/v1
+  + 6 SPDX 2.3; the builder id, the build type and the Rekor log entries
+  recorded above.
