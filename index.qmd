@@ -272,7 +272,7 @@ The [security policy](security.html) covers vulnerability reporting, supported v
 ## Paper
 
 ::: {.callout-note appearance="simple"}
-**[Download the research paper (PDF)](/assets/trishula-paper.pdf){.download}** — 18 pp (abstract, keywords, contents, numbered references). The arXiv link lands here when the paper is archived.
+**[Download the research paper (PDF)](/assets/trishula-paper.pdf){.download}** — 19 pp (abstract, keywords, contents, numbered references). The arXiv link lands here when the paper is archived.
 :::
 
 The site's research companion = the research paper (*"Trishula: An eBPF-Native, Developer-First Web Application and API Firewall for Kubernetes"). It carries the adoptability thesis, the field survey and the adoption plan. The survey covers Coraza, ModSecurity, SafeLine, open-appsec, CrowdSec, fail2ban and the eBPF cousins, with the feature-coverage matrix.
