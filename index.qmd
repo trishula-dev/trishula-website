@@ -68,7 +68,7 @@ The design has two planes and one control plane. The kernel plane answers the ch
 - **Engine** (Deployment): the detection ladder S0–S7 ([2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures)). The stages in walk order: kernel verdict hits; the Vectorscan hot subset; OWASP CRS via embedded Coraza. Then: CEL rules under cost budgets; OpenAPI positive security; bot fingerprints and behaviour. Last: rate limits with kernel-enforced bans; the ML scorer.
 - **Operator** (Deployment): compiles `WAFPolicy`/`BanPolicy` CRs into engine bundles and pre-seeds the shield maps. Rollback is a CRD-recorded re-pin.
 
-Each verdict is a correlated OpenTelemetry record (`trishula.verdict.v1`). Dashboards ship in-repo.
+Each verdict is a correlated OpenTelemetry record (`trishula.verdict.v2`). Dashboards ship in-repo.
 
 ### The packet path, end to end
 
@@ -173,7 +173,7 @@ flowchart LR
     DOS["Shield runner<br/>(flow_stats sweep → cue)"] -.->|"cues"| SWB
     SWB -.->|"10 · ban push"| KB["Kernel ban<br/>table"]
     VX -.->|"10 · backfill"| KC["Kernel verdict<br/>cache"]
-    LDX -.->|"11 · records"| TEL[("OTel:<br/>trishula.verdict.v1")]
+    LDX -.->|"11 · records"| TEL[("OTel:<br/>trishula.verdict.v2")]
 
     subgraph CP["trishula-operator"]
         CRD["CRDs: WAFPolicy · APISpec<br/>RuleSet · BanPolicy"] --> COMP["Compiler:<br/>bundles + map values"]
@@ -213,7 +213,7 @@ flowchart TB
 - **Fail-open by default:** the inline shaper never becomes the outage. `failureMode` is explicit and audited per policy.
 - **Rollback:** a CRD-recorded re-pin of the previous bundle. The operation needs no manual intervention.
 - **Node requirements:** kernel 5.8+; the shield is CO-RE and verifier-checked in CI.
-- **Telemetry:** every verdict is one OTLP span + metric + log on `trishula.verdict.v1`; dashboards ship in-repo.
+- **Telemetry:** every verdict is one OTLP span + metric + log on `trishula.verdict.v2`; dashboards ship in-repo.
 
 **Detection ladder** ([2.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#23-d3--detection-depth-more-than-negative-signatures); short-circuit on the first decisive verdict). The stages: S0 kernel hits (bans + cached verdicts) → S1 Vectorscan hot subset → S2 CRS via embedded Coraza. Later: S3 CEL rules → S4 OpenAPI positive security → S5 bot evidence. Last: S6 rate windows + ban events → S7 ML scorer (local ONNX + async judge).
 ScoredWindowBan turns repeated abuse into kernel-enforced temporary bans. The bans carry evidence records. Prefix escalation stays off by default.
@@ -247,7 +247,7 @@ The education programme is the adoption mechanism:
 - **The 15-minute gate** ([TR-23](https://github.com/trishula-dev/trishula/issues/23), metric M3) — clone → first enforced rule in ≤ 15 minutes, timed nightly in CI. A regression stops the release.
 - **Copy-paste-first policy recipes** — every lab ships the exact YAML a developer would commit.
 - **Promotion gates as the adoption path** — learn → shadow → enforce is a safety mechanism and the adoption journey together. Each stage has a lab.
-- **Verdict telemetry a developer reads** — one correlated OTel record per request. The schema (`trishula.verdict.v1`) is documented like the API it is.
+- **Verdict telemetry a developer reads** — one correlated OTel record per request. The schema (`trishula.verdict.v2`) is documented like the API it is.
 - **Honest exit criteria** — every release states what works and what does not.
 
 The audience: the application developer and platform engineer who runs Kubernetes. Documentation, labs and error messages read at that level first.
@@ -276,6 +276,8 @@ Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/tris
 | **2026.01-rc1** | [TR-01](https://github.com/trishula-dev/trishula/issues/1)–[TR-14](https://github.com/trishula-dev/trishula/issues/14): repo seed, CEL seed, shield PoC, ingest, ladder slice, NGF lab, CRS differential, operator/CRD, ban shadow + enforce, OTel, bots v0, positive v0, honest exit |
 | **2026.01-rc2** | [TR-15](https://github.com/trishula-dev/trishula/issues/15)–[TR-26](https://github.com/trishula-dev/trishula/issues/26): HTTP/2+gRPC, Vectorscan, CEL hot reload, OpenAPI learn, behavioural bots, rate limits, ONNX scorer, ext_proc, DX gate, bench, multi-tenancy, Envoy lane |
 | **2026.01-rc3** | [TR-27](https://github.com/trishula-dev/trishula/issues/27)–[TR-36](https://github.com/trishula-dev/trishula/issues/36): academy, HTTP/3 + PQ posture (evaluation only), behavioural DoS, DPU, multi-arch, residue gate, composition watch |
+| **2026.01 (GA)** ([release](https://github.com/trishula-dev/trishula/releases/tag/2026.01)) | [TR-194](https://github.com/trishula-dev/trishula/issues/236)–[TR-203](https://github.com/trishula-dev/trishula/issues/264): the TLS-termination lane — the QUIC kernel abuse class ([PR](https://github.com/trishula-dev/trishula/pull/271)), the QUIC-ingress lab ([PR](https://github.com/trishula-dev/trishula/pull/273)), the inline H3 listener ([PR](https://github.com/trishula-dev/trishula/pull/272)), the X25519MLKEM768 profile ([PR](https://github.com/trishula-dev/trishula/pull/270)), the JA4/PQC corpus ([PR](https://github.com/trishula-dev/trishula/pull/268)); the stage stamps (PRs [#245](https://github.com/trishula-dev/trishula/pull/245), [#274](https://github.com/trishula-dev/trishula/pull/274)); the JWT stage ([PR #269](https://github.com/trishula-dev/trishula/pull/269)); the protocol conformance rejects ([PR #267](https://github.com/trishula-dev/trishula/pull/267)); the manual ban rule ([PR #248](https://github.com/trishula-dev/trishula/pull/248)); the shield DoS runner ([PR #249](https://github.com/trishula-dev/trishula/pull/249)); the DoS signature ([PR #250](https://github.com/trishula-dev/trishula/pull/250)); the consult signals ([PR #252](https://github.com/trishula-dev/trishula/pull/252)); the challenge hop (PRs [#256](https://github.com/trishula-dev/trishula/pull/256), [#258](https://github.com/trishula-dev/trishula/pull/258)) |
+| **post-GA — in progress** | [TR-205](https://github.com/trishula-dev/trishula/issues/288): the WAF adversarial test program — the harness ([PR](https://github.com/trishula-dev/trishula/pull/296)), the libinjection record ([PR](https://github.com/trishula-dev/trishula/pull/295)), the shield hook spike ([PR](https://github.com/trishula-dev/trishula/pull/297)), the per-PR gate ([PR](https://github.com/trishula-dev/trishula/pull/299)), the release suite ([PR](https://github.com/trishula-dev/trishula/pull/300)), the README ledger ([PR](https://github.com/trishula-dev/trishula/pull/301)); the release-suite rows read pending until their first release-cut run. Also: [TR-201](https://github.com/trishula-dev/trishula/issues/243) — kTLS Mode A, and [TR-202](https://github.com/trishula-dev/trishula/issues/244) — the DPU shape (both carry the 2026.03 ruling) |
 | **research** | [TR-39](https://github.com/trishula-dev/trishula/issues/51)–[TR-41](https://github.com/trishula-dev/trishula/issues/53): the socket-plane L7 fast path study (Beeline), the WAFPolicy→eBPF compiler spike, the kernel-altitude TLS posture ([§9.7](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#97-visibility-contracts-per-mode), [§9.9](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#99-socket-plane-l7-fast-path-a-tracked-evaluation-no-runtime-commitment)) |
 
 Contributions follow the [contributing guide](contributing.html). Pick an issue labelled `complexity:starter`, or any `area:*` that fits. The issue body carries the design source. Branch + PR against `trishula-dev/trishula` (MIT).
