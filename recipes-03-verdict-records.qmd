@@ -1,5 +1,5 @@
 ---
-title: "Recipe 3 — Read the verdicts: the OTel record shape (`trishula.verdict.v1`)"
+title: "Recipe 3 — Read the verdicts: the OTel record shape (`trishula.verdict.v2`)"
 ---
 
 | Tool | Section | Level | Time | Layer | Tags |

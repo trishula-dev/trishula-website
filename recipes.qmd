@@ -29,7 +29,7 @@ A planned recipe stays PENDING until a worked pin and a smoke run exist.
 |---|---|---|---|
 | 1 | Install Trishula on a kind cluster and see the first verdict | easy | [the DX1 lab path, `lab/dx1/`](https://github.com/trishula-dev/trishula/tree/main/lab/dx1) |
 | 2 | Apply your first WAFPolicy: CR plus one curl, the verdict line | easy | [§11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl), the CRD surface |
-| 3 | Read the verdicts: the OTel record shape (`trishula.verdict.v1`) | easy | [§15.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#152-the-verdict-record-log-body-schema-versioned), the verdict signals |
+| 3 | Read the verdicts: the OTel record shape (`trishula.verdict.v2`) | easy | [§15.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#152-the-verdict-record-log-body-schema-versioned), the verdict signals |
 | 4 | Write a CEL rule at S3 with a cost budget | medium | [§11.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#113-cel-as-the-developer-facing-dsl), [§8.1](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#81-design-principles) |
 | 5 | Tune the CRS exclusion set without dropping the reference posture | medium | [§11.2](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#112-crs-the-correctness-baseline), [§11.8](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#118-crs-differential-parity-gate) |
 | 6 | Run the ban ladder: ScoredWindowBan shadow, then enforce | hard | [§13.3](https://github.com/trishula-dev/trishula/blob/main/docs/spec.md#133-the-ban-algorithm-scoredwindowban-v1-specified) |
