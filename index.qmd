@@ -252,6 +252,21 @@ The education programme is the adoption mechanism:
 
 The audience: the application developer and platform engineer who runs Kubernetes. Documentation, labs and error messages read at that level first.
 
+## Adversarial test coverage
+
+The adversarial program runs the CRS corpus, the evasion batteries and the engine-differential at two stages. Every merge runs the per-PR gate. The release cut runs the release suite ([TR-205](https://github.com/trishula-dev/trishula/issues/293)). Each number in the table cites its recorded run; the verbatim receipts sit on the [TR-205 record](https://github.com/trishula-dev/trishula/issues/288#issuecomment-6788016467). The numbers re-read at each release.
+
+| Layer | Coverage | Verdict |
+|---|---|---|
+| CRS parity (the differential gate) | 20/20 rows, two runs | pass |
+| Enforcement pin (WH-SQLI-001) | 403 + the rule id on the wire | pass |
+| waf-bypass battery | 756 legs passed of 6789, 0 bypassed, 0 falsed | pass |
+| CRS detection record (the shadow stage) | 160/182 block rows detected | record |
+| Shield hook loads (the spike) | 4/4 hook classes loaded on the runner kernel | pass |
+| goTestWAF full corpus + sqlmap + open-appsec | pending the first rehearsal ([#293](https://github.com/trishula-dev/trishula/issues/293)) | pending |
+
+The live table lives on the [repo README](https://github.com/trishula-dev/trishula#adversarial-test-coverage-tr-205); this index carries the summary.
+
 ## Roadmap
 
 Work is tracked on the [Trishula — Roadmap board](https://github.com/orgs/trishula-dev/projects/1) as issues in the [`trishula` repo](https://github.com/trishula-dev/trishula/issues). Every issue lands a runnable artefact with an exit criterion. The records prove the ladder end to end.
